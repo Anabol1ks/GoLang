@@ -1,1 +1,1 @@
-g
+fmt.Println(s_max)
