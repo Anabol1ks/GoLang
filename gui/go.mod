@@ -1,4 +1,4 @@
-module main
+module GoApp
 
 go 1.22
 
