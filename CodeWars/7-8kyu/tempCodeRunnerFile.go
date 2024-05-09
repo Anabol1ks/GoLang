@@ -1,1 +1,2 @@
-w+1
+
+	return f(x)
