@@ -2,6 +2,8 @@ module exapmle/todo_app
 
 go 1.22.2
 
+require github.com/sirupsen/logrus v1.9.3
+
 require (
 	github.com/bytedance/sonic v1.11.6 // indirect
 	github.com/bytedance/sonic/loader v0.1.1 // indirect
