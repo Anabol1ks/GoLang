@@ -6,3 +6,5 @@
 ## [7-8 kyu](CodeWars/7-8kyu/)
 
 ## <span style="color:yellow">[6 kyu](CodeWars/6kyu/)</span>
+
+## <span style="color:yellow">[5 kyu](CodeWars/5kyu/)</span>
