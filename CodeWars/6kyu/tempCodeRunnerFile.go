@@ -1,1 +1,6 @@
-2000, 8000, 1000, 1.5
+func Mean(town string, strng string) float64 {
+// 	// your code
+// }
+// func Variance(town string, strng string) float64 {
+// 	// your code
+// }
