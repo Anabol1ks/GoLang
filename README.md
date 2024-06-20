@@ -1,5 +1,6 @@
 # GoLang
-[My Profile](https://www.codewars.com/users/Anabol1ks)\n
+[My Profile](https://www.codewars.com/users/Anabol1ks)
+
 ![Anabol1ks's CodeWars Badge](https://www.codewars.com/users/Anabol1ks/badges/large)
 
 # <span style="color:RED">[**CodeWars**](CodeWars/)
