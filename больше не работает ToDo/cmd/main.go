@@ -5,8 +5,10 @@ import (
 	"exapmle/todo_app/pkg/handler"
 	"exapmle/todo_app/pkg/repository"
 	"exapmle/todo_app/pkg/service"
+	"log"
 	"os"
 
+	"github.com/golang-migrate/migrate"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -35,6 +37,7 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("failed to initialize db:  %s", err.Error())
 	}
+	runMigrations()
 
 	repos := repository.NewRepository(db)
 	services := service.NewService(repos)
@@ -49,4 +52,18 @@ func initConfig() error {
 	viper.AddConfigPath("configs")
 	viper.SetConfigName("config")
 	return viper.ReadInConfig()
+}
+
+func runMigrations() {
+	m, err := migrate.New(
+		"file://./schema",
+		"postgres://postgres:12345@localhost:5432/postgres?sslmode=disable")
+	if err != nil {
+		log.Fatalf("Failed to create migrate instance: %v", err)
+	}
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		log.Fatalf("Failed to apply migrations: %v", err)
+	}
+	log.Println("Migrations applied successfully!")
 }
