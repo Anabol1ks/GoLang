@@ -5,26 +5,44 @@ import (
 	"strconv"
 )
 
+func gcd(a, b int) int {
+	for b != 0 {
+		a, b = b, a%b
+	}
+	return a
+}
+
+func reduceFraction(numerator, denominator int) (int, int) {
+	gcdValue := gcd(numerator, denominator)
+	return numerator / gcdValue, denominator / gcdValue
+}
+
 func ConvertFracts(a [][]int) (res string) {
-	var count, o int
+	for i := range a {
+		a[i][0], a[i][1] = reduceFraction(a[i][0], a[i][1])
+	}
+
+	var count, lcm int
 	for i := 1; ; i++ {
 		count = 0
-		for n := 0; n < len(a); n++ {
-			d := a[n][1]
+		for _, frac := range a {
+			d := frac[1]
 			if i%d == 0 {
 				count++
 			}
 		}
 		if count == len(a) {
-			o = i
+			lcm = i
 			break
 		}
 	}
-	for i, _ := range a {
-		d := a[i][1]
-		del := o / d
-		zn := strconv.Itoa(a[i][0] * del)
-		res += "(" + zn + "," + strconv.Itoa(o) + ")"
+
+	for _, frac := range a {
+		num := frac[0]
+		denom := frac[1]
+		multiplier := lcm / denom
+		newNum := num * multiplier
+		res += "(" + strconv.Itoa(newNum) + "," + strconv.Itoa(lcm) + ")"
 	}
 	return
 }
