@@ -94,15 +94,23 @@ func main() {
 	}
 	defer db.Close()
 
-	// Проверка соединения с базой данных
 	if err = db.Ping(); err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}
 
 	router := gin.Default()
-	router.POST("/sign", SignUp)
-	router.POST("/login", Login)
-	router.Run("localhost:8888")
+	router.LoadHTMLFiles("welcome.html")
+	router.StaticFS("/login", http.Dir("login"))
+	router.GET("/welcome", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "welcome.html", gin.H{
+			"title": "Main website",
+		})
+	})
+
+	router.POST("/sign-up", SignUp)
+	router.POST("/sign-in", Login)
+
+	router.Run(":8888")
 }
 
 // type Test struct {
