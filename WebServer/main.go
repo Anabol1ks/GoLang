@@ -99,9 +99,19 @@ func main() {
 	}
 
 	router := gin.Default()
-	router.LoadHTMLFiles("welcome.html")
+	router.LoadHTMLGlob("*.html")
 	router.StaticFS("/login", http.Dir("login"))
-	router.GET("/welcome", func(c *gin.Context) {
+	router.GET("/signin.html", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "signin.html", gin.H{
+			"title": "Main website",
+		})
+	})
+	router.GET("/signup.html", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "signup.html", gin.H{
+			"title": "Main website",
+		})
+	})
+	router.GET("/welcome.html", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "welcome.html", gin.H{
 			"title": "Main website",
 		})
