@@ -20,7 +20,6 @@ func main() {
 		fmt.Scan(&num)
 		a = append(a, num)
 	}
-	fmt.Println()
 	bl, idx := math.MaxInt64, math.MaxInt64
 	for _, i_a := range a {
 		for id_o, i_o := range o {
