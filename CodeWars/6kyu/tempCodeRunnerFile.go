@@ -1,2 +1,2 @@
-	// for _, 1 := range text {
-	// }
+
+	// fmt.Println(A / len(strsplit))
