@@ -1,0 +1,80 @@
+docker run --name Notes -e POSTGRES_PASSWORD=qwerty -d -p 2222:2222 postgres
+
+
+CREATE TABLE Users (
+    id SERIAL PRIMARY KEY,
+    telegram_id BIGINT UNIQUE NOT NULL,
+    username VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Notes (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES Users(id) ON DELETE CASCADE,
+    title VARCHAR(255),
+    content TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE Tags (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE NoteTags (
+    note_id INT REFERENCES Notes(id) ON DELETE CASCADE,
+    tag_id INT REFERENCES Tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (note_id, tag_id)
+);
+
+
+-- Схема базы данных
+-- Users (Пользователи)
+
+-- id (INT, Primary Key, Auto Increment) — уникальный идентификатор пользователя.
+-- telegram_id (BIGINT, Unique) — уникальный идентификатор пользователя в Telegram.
+-- username (VARCHAR) — имя пользователя в Telegram.
+-- created_at (TIMESTAMP) — дата и время создания записи.
+-- Notes (Заметки)
+
+-- id (INT, Primary Key, Auto Increment) — уникальный идентификатор заметки.
+-- user_id (INT, Foreign Key) — идентификатор пользователя, который создал заметку.
+-- title (VARCHAR) — заголовок заметки.
+-- content (TEXT) — содержание заметки.
+-- created_at (TIMESTAMP) — дата и время создания заметки.
+-- updated_at (TIMESTAMP) — дата и время последнего обновления заметки.
+-- Tags (Теги)
+
+-- id (INT, Primary Key, Auto Increment) — уникальный идентификатор тега.
+-- name (VARCHAR, Unique) — название тега.
+-- NoteTags (Связь заметок и тегов)
+
+-- note_id (INT, Foreign Key) — идентификатор заметки.
+-- tag_id (INT, Foreign Key) — идентификатор тега.
+
+
+-- Описание взаимодействий
+-- Регистрация пользователя: Когда пользователь впервые взаимодействует с ботом, его данные (telegram_id, username) сохраняются в таблицу Users.
+
+-- Создание заметки: Пользователь отправляет команду для создания заметки, бот сохраняет заметку в таблицу Notes, связывая её с пользователем по user_id.
+
+-- Добавление тегов к заметке: Пользователь может добавить теги к заметке. Теги сохраняются в таблице Tags, а связи между заметками и тегами — в таблице NoteTags.
+
+-- Получение заметок: Пользователь может запросить свои заметки, которые бот будет извлекать из таблицы Notes по user_id.
+
+-- Редактирование и удаление: Пользователь может редактировать или удалять свои заметки, обновляя или удаляя соответствующие записи в таблице Notes.
+
+-- Связи между таблицами
+-- Связь между Users и Notes:
+
+-- Каждый пользователь может иметь множество заметок.
+-- Каждая заметка принадлежит только одному пользователю.
+-- Эта связь реализована через внешний ключ user_id в таблице Notes, который ссылается на первичный ключ id в таблице Users.
+-- Связь между Notes и Tags через таблицу NoteTags:
+
+-- Каждая заметка может иметь множество тегов.
+-- Каждый тег может быть привязан к множеству заметок.
+-- Эта связь реализована через промежуточную таблицу NoteTags, которая содержит два внешних ключа: note_id и tag_id.
+-- note_id ссылается на первичный ключ id в таблице Notes.
+-- tag_id ссылается на первичный ключ id в таблице Tags.
