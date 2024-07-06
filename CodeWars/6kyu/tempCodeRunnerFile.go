@@ -1,2 +1,1 @@
-
-	// fmt.Println(A / len(strsplit))
+3.14 * math.Pow(r, 2)
