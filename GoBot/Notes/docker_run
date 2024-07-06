@@ -1,4 +1,5 @@
-docker run --name Notes -e POSTGRES_PASSWORD=qwerty -d -p 2222:2222 postgres
+docker run --name Notes -e POSTGRES_PASSWORD=qwerty -d -p 2222:5432 postgres
+
 
 
 CREATE TABLE Users (
