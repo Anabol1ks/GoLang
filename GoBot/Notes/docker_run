@@ -1,5 +1,6 @@
 docker run --name Notes -e POSTGRES_PASSWORD=qwerty -d -p 2222:5432 postgres
 
+create database notesbot;
 
 
 CREATE TABLE Users (
