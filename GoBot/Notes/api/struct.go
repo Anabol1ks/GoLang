@@ -14,7 +14,7 @@ func SetDB(database *sqlx.DB) {
 
 func RunDB() error {
 	var err error
-	db, err = sqlx.Open("postgres", "host=localhost port=2222 user=postgres password=qwerty dbname=notesbot sslmode=disable")
+	db, err = sqlx.Open("postgres", "host=localhost port=5433 user=postgres password=12341 dbname=notesbot sslmode=disable")
 	if err != nil {
 		return err
 	}

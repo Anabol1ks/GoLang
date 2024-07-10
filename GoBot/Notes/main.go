@@ -14,12 +14,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var Keyboard = tgbotapi.NewReplyKeyboard(
-	tgbotapi.NewKeyboardButtonRow(
-		tgbotapi.NewKeyboardButton("Список"),
-		tgbotapi.NewKeyboardButton("Новая запись"),
-	),
-)
 var NotDel = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Отмена"),
@@ -67,7 +61,7 @@ func main() {
 			bot.Send(msg)
 			time.Sleep(1 * time.Second)
 			msg = tgbotapi.NewMessage(chatID, "Выберите дальнейшее действие")
-			msg.ReplyMarkup = Keyboard
+			msg.ReplyMarkup = api.Keyboard
 			bot.Send(msg)
 			userStates[chatID] = ""
 		case "id":
@@ -105,7 +99,7 @@ func main() {
 		case "Отмена":
 			msg := tgbotapi.NewMessage(chatID, "Вы отменили действие")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-			msg.ReplyMarkup = Keyboard
+			msg.ReplyMarkup = api.Keyboard
 			bot.Send(msg)
 		}
 		switch state {
@@ -121,6 +115,7 @@ func main() {
 			time.Sleep(1 * time.Second)
 			notes := api.NotePlus(userID, title, content)
 			msg = tgbotapi.NewMessage(chatID, notes)
+			msg.ReplyMarkup = api.Keyboard
 			bot.Send(msg)
 			userStates[chatID] = ""
 			title, content = "", ""
@@ -128,7 +123,7 @@ func main() {
 			title = userMessage
 			del := api.DelNote(chatID, title)
 			msg := tgbotapi.NewMessage(chatID, del)
-			msg.ReplyMarkup = Keyboard
+			msg.ReplyMarkup = api.Keyboard
 			bot.Send(msg)
 			title = ""
 			userStates[chatID] = ""
@@ -144,11 +139,11 @@ func main() {
 			res, err := api.UpdateNote(chatID, title, content)
 			if err != nil {
 				msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Ошибка: %v", err))
-				msg.ReplyMarkup = Keyboard
+				msg.ReplyMarkup = api.Keyboard
 				bot.Send(msg)
 			} else {
 				msg := tgbotapi.NewMessage(chatID, res)
-				msg.ReplyMarkup = Keyboard
+				msg.ReplyMarkup = api.Keyboard
 				bot.Send(msg)
 			}
 			content = ""
@@ -160,11 +155,11 @@ func main() {
 
 			if err != nil {
 				msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Ошибка: %v", err))
-				msg.ReplyMarkup = Keyboard
+				msg.ReplyMarkup = api.Keyboard
 				bot.Send(msg)
 			} else {
 				msg := tgbotapi.NewMessage(chatID, contentPr)
-				msg.ReplyMarkup = Keyboard
+				msg.ReplyMarkup = api.Keyboard
 				bot.Send(msg)
 			}
 			title = ""

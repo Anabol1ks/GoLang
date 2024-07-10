@@ -11,6 +11,12 @@ import (
 	"github.com/lib/pq"
 )
 
+var Keyboard = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Список"),
+		tgbotapi.NewKeyboardButton("Новая запись"),
+	),
+)
 var Sps = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Выбрать заметку"),
@@ -99,6 +105,7 @@ func StrNotes(tgid int64, bot *tgbotapi.BotAPI, chatID int64) {
 	}
 	if len(titles) == 0 {
 		msg := tgbotapi.NewMessage(chatID, "Нет заметок для этого пользователя")
+		msg.ReplyMarkup = Keyboard
 		bot.Send(msg)
 		return
 	}
