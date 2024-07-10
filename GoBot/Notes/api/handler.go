@@ -14,6 +14,8 @@ import (
 var Sps = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Выбрать заметку"),
+		tgbotapi.NewKeyboardButton("Изменить заметку"),
+		tgbotapi.NewKeyboardButton("Удалить заметку"),
 	),
 )
 
@@ -100,9 +102,11 @@ func StrNotes(tgid int64, bot *tgbotapi.BotAPI, chatID int64) {
 		bot.Send(msg)
 		return
 	}
-
+	for i := range titles {
+		titles[i] = " · " + titles[i]
+	}
 	titlesStr := strings.Join(titles, "\n")
-	msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Заголовки заметок:\n%s", "· "+titlesStr))
+	msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Заголовки заметок:\n%s", titlesStr))
 	msg.ReplyMarkup = Sps
 	bot.Send(msg)
 }
@@ -122,4 +126,48 @@ func PrintNote(tgid int64, title string) string {
 		}
 	}
 	return content.Content
+}
+
+func UpdateNote(tgid int64, title, text string) string {
+	var dbUser UserID
+	err := db.Get(&dbUser, "SELECT id FROM Users WHERE telegram_id=$1", tgid)
+	if err != nil {
+		log.Printf("Ошибка при получении user_id: %v\n", err)
+		return "Ошибка при получении пользователя"
+	}
+	timeUp := time.Now()
+	oldcontent := PrintNote(tgid, title)
+	_, err = db.Exec("UPDATE notes SET content=$1, updated_at =$2 WHERE user_id=$3 AND title=$4", text, timeUp, dbUser.Userid, title)
+	if err != nil {
+		log.Println(err)
+		return "Ошибка, у вас нет заголовка с названием: " + title
+	}
+	res := "Информация в заметке изменна с:" + "\n" + " · " + oldcontent + "\n" + "На:" + "\n" + " · " + text
+	return res
+}
+
+func DelNote(tgid int64, title string) string {
+	var dbUser UserID
+	err := db.Get(&dbUser, "SELECT id FROM Users WHERE telegram_id=$1", tgid)
+	if err != nil {
+		log.Printf("Ошибка при получении user_id: %v\n", err)
+		return "Ошибка при получении пользователя"
+	}
+	result, err := db.Exec("DELETE FROM notes WHERE user_id=$1 AND title=$2", dbUser.Userid, title)
+	if err != nil {
+		log.Printf("Ошибка при удалении заметки: %v\n", err)
+		return "Ошибка при удалении заметки"
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		log.Printf("Ошибка при получении количества затронутых строк: %v\n", err)
+		return "Ошибка при удалении заметки"
+	}
+
+	if rowsAffected == 0 {
+		return "Заметка с таким заголовком не найдена"
+	}
+
+	return "Заметка " + title + " успешно удалена"
 }

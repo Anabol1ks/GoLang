@@ -54,7 +54,8 @@ func main() {
 		userID := update.Message.From.ID
 		userName := update.Message.From.UserName
 		userMessage := update.Message.Text
-		if userMessage == "/start" {
+		switch userMessage {
+		case "/start":
 			create := api.UserCreat(userID, userName)
 			msg := tgbotapi.NewMessage(chatID, create)
 			bot.Send(msg)
@@ -62,17 +63,34 @@ func main() {
 			msg = tgbotapi.NewMessage(chatID, "Выберите дальнейшее действие")
 			msg.ReplyMarkup = Keyboard
 			bot.Send(msg)
-
-		}
-		if userMessage == "id" {
+		case "id":
 			msg := tgbotapi.NewMessage(chatID, strconv.Itoa(int(chatID)))
 			bot.Send(msg)
-		}
-		if userMessage == "Новая запись" {
+		case "Новая запись":
 			msg := tgbotapi.NewMessage(chatID, "Введите название заголовка")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 			bot.Send(msg)
 			userStates[chatID] = "титл"
+		case "Список":
+			msg := tgbotapi.NewMessage(chatID, "Список ваших заметок")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			bot.Send(msg)
+			api.StrNotes(userID, bot, chatID)
+		case "Выбрать заметку":
+			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			userStates[chatID] = "вывод"
+			bot.Send(msg)
+		case "Изменить заметку":
+			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			userStates[chatID] = "редакт"
+			bot.Send(msg)
+		case "Удалить заметку":
+			userStates[chatID] = "delete"
+			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			bot.Send(msg)
 		}
 		if state == "титл" {
 			title = userMessage
@@ -91,22 +109,36 @@ func main() {
 			userStates[chatID] = ""
 			title, content = "", ""
 		}
-		if userMessage == "Список" {
-			msg := tgbotapi.NewMessage(chatID, "Список ваших заметок")
-			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+		if state == "delete" {
+			title = userMessage
+			del := api.DelNote(chatID, title)
+			msg := tgbotapi.NewMessage(chatID, del)
+			msg.ReplyMarkup = Keyboard
 			bot.Send(msg)
-			api.StrNotes(userID, bot, chatID)
+			title = ""
+			userStates[chatID] = ""
 		}
-		if userMessage == "Выбрать заметку" {
-			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
-			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
-			userStates[chatID] = "вывод"
+		if state == "редакт" {
+			title = userMessage
+			msg := tgbotapi.NewMessage(chatID, "Введите новое содеражание заметки")
 			bot.Send(msg)
+			userStates[chatID] = "редакт+"
+		}
+		if state == "редакт+" {
+			content = userMessage
+			userStates[chatID] = ""
+			res := api.UpdateNote(chatID, title, content)
+			msg := tgbotapi.NewMessage(chatID, res)
+			msg.ReplyMarkup = Keyboard
+			bot.Send(msg)
+			content = ""
+			title = ""
 		}
 		if state == "вывод" {
 			title = userMessage
-			content := api.PrintNote(chatID, title)
-			msg := tgbotapi.NewMessage(chatID, content)
+			contentPr := api.PrintNote(chatID, title)
+			msg := tgbotapi.NewMessage(chatID, contentPr)
+			msg.ReplyMarkup = Keyboard
 			bot.Send(msg)
 			title = ""
 			userStates[chatID] = ""
