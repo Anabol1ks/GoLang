@@ -111,39 +111,50 @@ func StrNotes(tgid int64, bot *tgbotapi.BotAPI, chatID int64) {
 	bot.Send(msg)
 }
 
-func PrintNote(tgid int64, title string) string {
+func PrintNote(tgid int64, title string) (string, error) {
 	var dbUser UserID
 	err := db.Get(&dbUser, "SELECT id FROM Users WHERE telegram_id=$1", tgid)
 	if err != nil {
 		log.Printf("Ошибка при получении user_id: %v\n", err)
-		return "Ошибка при получении пользователя"
+		return "", fmt.Errorf("не удалось найти пользователя с указанным telegram_id")
 	}
 	var content Content
 	err = db.QueryRowx("SELECT content FROM notes WHERE user_id=$1 AND title=$2", dbUser.Userid, title).StructScan(&content)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return "Ничего не найдено"
+			return "", fmt.Errorf("заметка с указанным заголовком не найдена")
 		}
+		log.Printf("Ошибка при получении содержания заметки: %v\n", err)
+		return "", fmt.Errorf("ошибка при получении содержания заметки")
 	}
-	return content.Content
+
+	return content.Content, nil
 }
 
-func UpdateNote(tgid int64, title, text string) string {
+func UpdateNote(tgid int64, title, text string) (string, error) {
 	var dbUser UserID
 	err := db.Get(&dbUser, "SELECT id FROM Users WHERE telegram_id=$1", tgid)
 	if err != nil {
 		log.Printf("Ошибка при получении user_id: %v\n", err)
-		return "Ошибка при получении пользователя"
+		return "", fmt.Errorf("не удалось найти пользователя с указанным telegram_id")
 	}
 	timeUp := time.Now()
-	oldcontent := PrintNote(tgid, title)
-	_, err = db.Exec("UPDATE notes SET content=$1, updated_at =$2 WHERE user_id=$3 AND title=$4", text, timeUp, dbUser.Userid, title)
+	oldcontent, err := PrintNote(tgid, title)
 	if err != nil {
-		log.Println(err)
-		return "Ошибка, у вас нет заголовка с названием: " + title
+		log.Printf("Ошибка при получении содержания заметки: %v\n", err)
+		return "", fmt.Errorf("Нет заметки с таким названием")
 	}
-	res := "Информация в заметке изменна с:" + "\n" + " · " + oldcontent + "\n" + "На:" + "\n" + " · " + text
-	return res
+
+	_, err = db.Exec("UPDATE notes SET content=$1, updated_at=$2 WHERE user_id=$3 AND title=$4", text, timeUp, dbUser.Userid, title)
+	if err != nil {
+		log.Printf("Ошибка при обновлении заметки: %v\n", err)
+		return "", fmt.Errorf("не удалось обновить заметку. Возможно, заметка с таким заголовком не существует")
+	}
+	res := fmt.Sprintf(
+		"Информация в заметке изменена с:\n · %s\nНа:\n · %s",
+		oldcontent, text,
+	)
+	return res, nil
 }
 
 func DelNote(tgid int64, title string) string {

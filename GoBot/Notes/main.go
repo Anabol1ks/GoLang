@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"notes/api"
 	"os"
@@ -17,6 +18,11 @@ var Keyboard = tgbotapi.NewReplyKeyboard(
 	tgbotapi.NewKeyboardButtonRow(
 		tgbotapi.NewKeyboardButton("Список"),
 		tgbotapi.NewKeyboardButton("Новая запись"),
+	),
+)
+var NotDel = tgbotapi.NewReplyKeyboard(
+	tgbotapi.NewKeyboardButtonRow(
+		tgbotapi.NewKeyboardButton("Отмена"),
 	),
 )
 
@@ -59,10 +65,11 @@ func main() {
 			create := api.UserCreat(userID, userName)
 			msg := tgbotapi.NewMessage(chatID, create)
 			bot.Send(msg)
-			time.Sleep(50 * time.Millisecond)
+			time.Sleep(1 * time.Second)
 			msg = tgbotapi.NewMessage(chatID, "Выберите дальнейшее действие")
 			msg.ReplyMarkup = Keyboard
 			bot.Send(msg)
+			userStates[chatID] = ""
 		case "id":
 			msg := tgbotapi.NewMessage(chatID, strconv.Itoa(int(chatID)))
 			bot.Send(msg)
@@ -76,29 +83,38 @@ func main() {
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 			bot.Send(msg)
 			api.StrNotes(userID, bot, chatID)
+			userStates[chatID] = ""
 		case "Выбрать заметку":
 			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			msg.ReplyMarkup = NotDel
 			userStates[chatID] = "вывод"
 			bot.Send(msg)
 		case "Изменить заметку":
 			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			msg.ReplyMarkup = NotDel
 			userStates[chatID] = "редакт"
 			bot.Send(msg)
 		case "Удалить заметку":
 			userStates[chatID] = "delete"
 			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			msg.ReplyMarkup = NotDel
+			bot.Send(msg)
+		case "Отмена":
+			msg := tgbotapi.NewMessage(chatID, "Вы отменили действие")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			msg.ReplyMarkup = Keyboard
 			bot.Send(msg)
 		}
-		if state == "титл" {
+		switch state {
+		case "титл":
 			title = userMessage
 			userStates[chatID] = "заметка"
 			msg := tgbotapi.NewMessage(chatID, "Напишите саму заметку")
 			bot.Send(msg)
-		}
-		if state == "заметка" {
+		case "заметка":
 			content = userMessage
 			msg := tgbotapi.NewMessage(chatID, "Получил")
 			bot.Send(msg)
@@ -108,8 +124,7 @@ func main() {
 			bot.Send(msg)
 			userStates[chatID] = ""
 			title, content = "", ""
-		}
-		if state == "delete" {
+		case "delete":
 			title = userMessage
 			del := api.DelNote(chatID, title)
 			msg := tgbotapi.NewMessage(chatID, del)
@@ -117,31 +132,42 @@ func main() {
 			bot.Send(msg)
 			title = ""
 			userStates[chatID] = ""
-		}
-		if state == "редакт" {
+		case "редакт":
 			title = userMessage
 			msg := tgbotapi.NewMessage(chatID, "Введите новое содеражание заметки")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 			bot.Send(msg)
 			userStates[chatID] = "редакт+"
-		}
-		if state == "редакт+" {
-			content = userMessage
+		case "редакт+":
 			userStates[chatID] = ""
-			res := api.UpdateNote(chatID, title, content)
-			msg := tgbotapi.NewMessage(chatID, res)
-			msg.ReplyMarkup = Keyboard
-			bot.Send(msg)
+			content = userMessage
+			res, err := api.UpdateNote(chatID, title, content)
+			if err != nil {
+				msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Ошибка: %v", err))
+				msg.ReplyMarkup = Keyboard
+				bot.Send(msg)
+			} else {
+				msg := tgbotapi.NewMessage(chatID, res)
+				msg.ReplyMarkup = Keyboard
+				bot.Send(msg)
+			}
 			content = ""
 			title = ""
-		}
-		if state == "вывод" {
-			title = userMessage
-			contentPr := api.PrintNote(chatID, title)
-			msg := tgbotapi.NewMessage(chatID, contentPr)
-			msg.ReplyMarkup = Keyboard
-			bot.Send(msg)
-			title = ""
+		case "вывод":
 			userStates[chatID] = ""
+			title = userMessage
+			contentPr, err := api.PrintNote(chatID, title)
+
+			if err != nil {
+				msg := tgbotapi.NewMessage(chatID, fmt.Sprintf("Ошибка: %v", err))
+				msg.ReplyMarkup = Keyboard
+				bot.Send(msg)
+			} else {
+				msg := tgbotapi.NewMessage(chatID, contentPr)
+				msg.ReplyMarkup = Keyboard
+				bot.Send(msg)
+			}
+			title = ""
 		}
 	}
 }
