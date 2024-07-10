@@ -16,7 +16,8 @@ CREATE TABLE Notes (
     title VARCHAR(255),
     content TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_user_note_title UNIQUE (user_id, title)
 );
 
 CREATE TABLE Tags (

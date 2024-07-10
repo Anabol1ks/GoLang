@@ -91,5 +91,25 @@ func main() {
 			userStates[chatID] = ""
 			title, content = "", ""
 		}
+		if userMessage == "Список" {
+			msg := tgbotapi.NewMessage(chatID, "Список ваших заметок")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			bot.Send(msg)
+			api.StrNotes(userID, bot, chatID)
+		}
+		if userMessage == "Выбрать заметку" {
+			msg := tgbotapi.NewMessage(chatID, "Введите название заметки")
+			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
+			userStates[chatID] = "вывод"
+			bot.Send(msg)
+		}
+		if state == "вывод" {
+			title = userMessage
+			content := api.PrintNote(chatID, title)
+			msg := tgbotapi.NewMessage(chatID, content)
+			bot.Send(msg)
+			title = ""
+			userStates[chatID] = ""
+		}
 	}
 }

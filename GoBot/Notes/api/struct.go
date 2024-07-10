@@ -48,6 +48,10 @@ type UserID struct {
 	Userid int64 `db:"id"`
 }
 
+type Content struct {
+	Content string `db:"content"`
+}
+
 // Note структура представляет заметку.
 type Note struct {
 	ID        int       `json:"id"`
