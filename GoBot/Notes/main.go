@@ -67,8 +67,12 @@ func main() {
 		case "id":
 			msg := tgbotapi.NewMessage(chatID, strconv.Itoa(int(chatID)))
 			bot.Send(msg)
+
+		case "Адель":
+			msg := tgbotapi.NewMessage(chatID, "АДЕЛЬ ВЕРНИ 2К")
+			bot.Send(msg)
 		case "Новая запись":
-			msg := tgbotapi.NewMessage(chatID, "Введите название заголовка")
+			msg := tgbotapi.NewMessage(chatID, "Введите заголовок заметки")
 			msg.ReplyMarkup = tgbotapi.NewRemoveKeyboard(true)
 			bot.Send(msg)
 			userStates[chatID] = "титл"
