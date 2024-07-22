@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sort"
 )
 
 type WordLen struct {
@@ -18,17 +17,21 @@ func LongestConsec(strarr []string, k int) string {
 	for i, w := range strarr {
 		wordlen[i] = WordLen{Word: w, Lens: len(w)}
 	}
-	sort.Slice(wordlen, func(i, j int) bool {
-		return wordlen[i].Lens > wordlen[j].Lens
-	})
-	longestWords := make([]string, 0, k)
-
-	for i := 0; i < k && i < len(wordlen); i++ {
-		longestWords = append(longestWords, wordlen[i].Word)
-	}
+	sum, max := 0, 0
 	str := ""
-	for _, s := range longestWords {
-		str += s
+	for i := 0; i <= len(wordlen)-k; i++ {
+		d := wordlen[i : i+k]
+		for j := 0; j < len(d); j++ {
+			sum += d[j].Lens
+		}
+		if sum > max {
+			str = ""
+			max = sum
+			for j := 0; j < len(d); j++ {
+				str += d[j].Word
+			}
+		}
+		sum = 0
 	}
 	return str
 }
