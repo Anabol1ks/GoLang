@@ -48,10 +48,13 @@ func Smallest(n int64) (res []int64) {
 			}
 		}
 	}
+	if int(n) == min {
+		return []int64{n, 0, 0}
+	}
 	res = append(res, int64(min), int64(in1), int64(in2))
 	return
 }
 
 func main() {
-	fmt.Println(Smallest(261235))
+	fmt.Println(Smallest(11111111))
 }
