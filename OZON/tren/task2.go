@@ -10,8 +10,8 @@ import (
 func main() {
 	var in *bufio.Reader
 	var out *bufio.Writer
-	in := bufio.NewReader(os.Stdin)
-	out := bufio.NewWriter(os.Stdout)
+	in = bufio.NewReader(os.Stdin)
+	out = bufio.NewWriter(os.Stdout)
 	defer out.Flush()
 
 	var t, n int
