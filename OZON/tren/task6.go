@@ -26,18 +26,17 @@ func main() {
 			arr[j] = int(math.Pow(2, float64(ch)))
 		}
 
-		// Сортировка коробок по убыванию веса
 		sort.Sort(sort.Reverse(sort.IntSlice(arr)))
 
 		res := 0
 		for len(arr) > 0 {
-			machines := make([]int, n) // Текущие машины с их остаточной грузоподъемностью
+			machines := make([]int, n)
 			for j := 0; j < len(arr); {
 				loaded := false
 				for m := 0; m < n; m++ {
 					if machines[m]+arr[j] <= k {
 						machines[m] += arr[j]
-						arr = append(arr[:j], arr[j+1:]...) // Удаляем коробку из списка
+						arr = append(arr[:j], arr[j+1:]...)
 						loaded = true
 						break
 					}
