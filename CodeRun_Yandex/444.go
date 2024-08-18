@@ -8,6 +8,9 @@ import (
 
 func isUniform(slice []string) bool {
 	first := slice[0]
+	if first == "." {
+		return false
+	}
 	for _, val := range slice {
 		if val != first {
 			return false
@@ -16,7 +19,7 @@ func isUniform(slice []string) bool {
 	return true
 }
 
-func Row(pole [][]string, n, m int) bool {
+func checkRow(pole [][]string, n, m int) bool {
 	for i := 0; i < n; i++ {
 		for j := 0; j <= m-5; j++ {
 			if isUniform(pole[i][j : j+5]) {
@@ -42,32 +45,25 @@ func checkColumn(pole [][]string, n, m int) bool {
 	return false
 }
 
-func checkAllDiagonals(pole [][]string, n, m int) bool {
+func checkDiagonal(pole [][]string, n, m int) bool {
 	for startRow := 0; startRow <= n-5; startRow++ {
 		for startCol := 0; startCol <= m-5; startCol++ {
-			if checkDiagonal(pole, startRow, startCol, 1, 1) {
+			diagonal1 := true
+			diagonal2 := true
+			for k := 0; k < 5; k++ {
+				if pole[startRow+k][startCol+k] != pole[startRow][startCol] || pole[startRow][startCol] == "." {
+					diagonal1 = false
+				}
+				if pole[startRow+k][startCol+4-k] != pole[startRow][startCol+4] || pole[startRow][startCol+4] == "." {
+					diagonal2 = false
+				}
+			}
+			if diagonal1 || diagonal2 {
 				return true
 			}
 		}
 	}
-
-	for startRow := 4; startRow < n; startRow++ {
-		for startCol := 0; startCol <= m-5; startCol++ {
-			if checkDiagonal(pole, startRow, startCol, -1, 1) {
-				return true
-			}
-		}
-	}
-
 	return false
-}
-
-func checkDiagonal(pole [][]string, startRow, startCol, rowStep, colStep int) bool {
-	diagonal := []string{}
-	for i := 0; i < 5; i++ {
-		diagonal = append(diagonal, pole[startRow+i*rowStep][startCol+i*colStep])
-	}
-	return isUniform(diagonal)
 }
 
 func main() {
@@ -76,9 +72,7 @@ func main() {
 	defer out.Flush()
 
 	var n, m int
-	res := "No"
-	fmt.Fscan(in, &n)
-	fmt.Fscan(in, &m)
+	fmt.Fscan(in, &n, &m)
 
 	pole := make([][]string, n)
 	for i := range pole {
@@ -94,15 +88,10 @@ func main() {
 			}
 		}
 	}
-	if Row(pole, n, m) {
-		res = "Yes"
-	}
-	if checkColumn(pole, n, m) {
-		res = "Yes"
-	}
-	if checkAllDiagonals(pole, n, m) {
-		res = "Yes"
-	}
 
-	fmt.Fprintln(out, res)
+	if checkRow(pole, n, m) || checkColumn(pole, n, m) || checkDiagonal(pole, n, m) {
+		fmt.Fprintln(out, "Yes")
+	} else {
+		fmt.Fprintln(out, "No")
+	}
 }
