@@ -8,7 +8,6 @@ import (
 	"time"
 )
 
-// Block keeps block headers
 type Block struct {
 	Timestamp     int64
 	Transactions  []*Transaction
@@ -17,7 +16,6 @@ type Block struct {
 	Nonce         int
 }
 
-// Serialize serializes the block
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
@@ -30,7 +28,6 @@ func (b *Block) Serialize() []byte {
 	return result.Bytes()
 }
 
-// HashTransactions returns a hash of the transactions in the block
 func (b *Block) HashTransactions() []byte {
 	var txHashes [][]byte
 	var txHash [32]byte
@@ -43,7 +40,6 @@ func (b *Block) HashTransactions() []byte {
 	return txHash[:]
 }
 
-// NewBlock creates and returns Block
 func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	block := &Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0}
 	pow := NewProofOfWork(block)
@@ -55,12 +51,10 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte) *Block {
 	return block
 }
 
-// NewGenesisBlock creates and returns genesis Block
 func NewGenesisBlock(coinbase *Transaction) *Block {
 	return NewBlock([]*Transaction{coinbase}, []byte{})
 }
 
-// DeserializeBlock deserializes a block
 func DeserializeBlock(d []byte) *Block {
 	var block Block
 
