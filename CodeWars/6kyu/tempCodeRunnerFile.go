@@ -1,1 +1,5 @@
-3.14 * math.Pow(r, 2)
+
+		fmt.Println(int(ch) - 48)
+	}
+	return ""
+}
