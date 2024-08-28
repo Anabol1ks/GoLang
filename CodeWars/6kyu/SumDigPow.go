@@ -2,8 +2,16 @@ package main
 
 import (
 	"fmt"
-	"math"
 )
+
+func powInt(base, exp uint64) uint64 {
+	result := uint64(1)
+	for exp > 0 {
+		result *= base
+		exp--
+	}
+	return result
+}
 
 func lennum(n uint64) int {
 	count := 0
@@ -20,7 +28,7 @@ func SumDigPow(a, b uint64) (res []uint64) {
 		s := i
 		l := lennum(s)
 		for s > 0 {
-			sum += uint64(math.Pow(float64(s%10), float64(l)))
+			sum += powInt(s%10, uint64(l))
 			l--
 			s = s / 10
 		}
