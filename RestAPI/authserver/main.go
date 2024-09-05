@@ -14,7 +14,7 @@ var db *sqlx.DB
 
 func main() {
 	var err error
-	db, err = sqlx.Open("postgres", "host=localhost port=5432 user=postgres password=qwerty dbname=mydatabase sslmode=disable")
+	db, err = sqlx.Open("postgres", "host=localhost port=5433 user=postgres password=12341 dbname=auth sslmode=disable")
 	if err != nil {
 		log.Fatalf("Failed to open database: %v", err)
 	}
@@ -50,17 +50,3 @@ func main() {
 
 	router.Run(":8888")
 }
-
-// type Test struct {
-// 	Id   int    `json:"id"`
-// 	Name string `json:"name"`
-// }
-
-// var test = []Test{
-// 	{1, "Grisha"},
-// 	{2, "Artyom"},
-// }
-
-// func getTest(c *gin.Context) {
-// 	c.IndentedJSON(http.StatusOK, test)
-// }
