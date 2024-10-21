@@ -4,19 +4,31 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/mail"
 	"os"
 
-	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
+
+	"github.com/gin-gonic/gin"
 )
 
+type Email struct {
+	Sender  string `json:"sender"`
+	Snippet string `json:"snippet"`
+}
+
+type PageVariables struct {
+	Emails []Email
+}
+
 func getTokenFromFile(filePath string) (*oauth2.Token, error) {
-	file, err := os.Open((filePath))
+	file, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +77,6 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 func getSender(headers []*gmail.MessagePartHeader) string {
 	for _, header := range headers {
 		if header.Name == "From" {
-			// Используем пакет net/mail для разбора заголовка From
 			addr, err := mail.ParseAddress(header.Value)
 			if err != nil {
 				log.Printf("Не удалось разобрать адрес отправителя: %v", err)
@@ -78,36 +89,39 @@ func getSender(headers []*gmail.MessagePartHeader) string {
 }
 
 func main() {
-	creadentialFile := "credentials.json"
-	data, err := os.ReadFile(creadentialFile)
+	credentialsFile := "credentials.json"
+	data, err := ioutil.ReadFile(credentialsFile)
 	if err != nil {
 		log.Fatalf("Не удалось прочитать файл credentials: %v", err)
 	}
 
 	config, err := google.ConfigFromJSON(data, gmail.GmailReadonlyScope)
 	if err != nil {
-		log.Fatalf("Не удалость создать конфигурацию: %v", err)
+		log.Fatalf("Не удалось создать конфигурацию из файла credentials: %v", err)
 	}
 
 	client := getClient(config)
+
 	srv, err := gmail.New(client)
 	if err != nil {
-		log.Fatalf("Не удалось создать Gmail клиента: %v", err)
+		log.Fatalf("Не удалось создать Gmail клиент: %v", err)
 	}
 
 	user := "me"
-	msgList, err := srv.Users.Messages.List(user).Do()
+	msgList, err := srv.Users.Messages.List(user).MaxResults(25).Do()
 	if err != nil {
-		log.Fatalf("Не удалось получить сообщение: %v", err)
+		log.Fatalf("Не удалось получить сообщения: %v", err)
 	}
 
+	var emails []Email
+
 	if len(msgList.Messages) == 0 {
-		fmt.Println("Сообщений нет")
+		fmt.Println("Сообщений нет.")
 	} else {
 		filteredSenders := []string{
 			"online@mirea.ru",
 		}
-		fmt.Println("Сообщения от выбранных отправителей: ")
+
 		for _, msg := range msgList.Messages {
 			message, err := srv.Users.Messages.Get(user, msg.Id).Do()
 			if err != nil {
@@ -119,10 +133,35 @@ func main() {
 
 			for _, filteredSender := range filteredSenders {
 				if sender == filteredSender {
-					fmt.Printf("Сообщение от %s: %s\n", sender, message.Snippet)
+					emails = append(emails, Email{
+						Sender:  sender,
+						Snippet: message.Snippet,
+					})
 					break
 				}
 			}
 		}
+	}
+
+	r := gin.Default()
+
+	r.GET("/", func(c *gin.Context) {
+		pageVariables := PageVariables{
+			Emails: emails,
+		}
+		tmpl, err := template.ParseFiles("index.html")
+		if err != nil {
+			c.String(500, err.Error())
+			return
+		}
+		err = tmpl.Execute(c.Writer, pageVariables)
+		if err != nil {
+			c.String(500, err.Error())
+		}
+	})
+
+	log.Println("Сервер запущен на :8080")
+	if err := r.Run(":8080"); err != nil {
+		log.Fatalf("Не удалось запустить сервер: %v", err)
 	}
 }

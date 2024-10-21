@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Фильтрация почты</title>
+</head>
+<body>
+    <h1>Фильтрованные письма</h1>
+    <ul>
+        {{range .Emails}}
+            <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
+        {{end}}
+    </ul>
+</body>
+</html>
