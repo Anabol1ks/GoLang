@@ -1,0 +1,5 @@
+CREATE TABLE user_senders (
+    id SERIAL PRIMARY KEY,
+    user_id INT NOT NULL,            -- ID пользователя
+    email VARCHAR(255) NOT NULL      -- Адрес электронной почты отправителя
+);

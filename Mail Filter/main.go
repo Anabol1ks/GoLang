@@ -9,6 +9,7 @@ import (
 	"net/mail"
 	"os"
 
+	_ "github.com/lib/pq"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/gmail/v1"
@@ -95,7 +96,7 @@ func main() {
 	}
 
 	user := "me"
-	msgList, err := srv.Users.Messages.List(user).MaxResults(20).Do()
+	msgList, err := srv.Users.Messages.List(user).Do()
 	if err != nil {
 		log.Fatalf("Не удалось получить сообщение: %v", err)
 	}
@@ -105,7 +106,6 @@ func main() {
 	} else {
 		filteredSenders := []string{
 			"online@mirea.ru",
-			"oplata-it@mirea.ru",
 		}
 		fmt.Println("Сообщения от выбранных отправителей: ")
 		for _, msg := range msgList.Messages {
