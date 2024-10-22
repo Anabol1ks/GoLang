@@ -26,7 +26,8 @@ type Email struct {
 }
 
 type PageVariables struct {
-	Emails []Email
+	Emails  []Email
+	Senders []string
 }
 
 type CachedEmails struct {
@@ -221,8 +222,8 @@ func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, re
 }
 
 // Автоматическое обновление писем каждые n секунд
-func autoUpdateEmails(srv *gmail.Service, senderList *SenderList) {
-	ticker := time.NewTicker(22 * time.Second)
+func autoUpdateEmails(srv *gmail.Service, senderList *SenderList, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -286,13 +287,13 @@ func main() {
 	}
 
 	// Запускаем горутину для периодического обновления списка отправителей (через указатель)
-	go updateSenderListPeriodically("blackSenders.json", 15*time.Second, &senderList)
+	go updateSenderListPeriodically("blackSenders.json", 2*time.Second, &senderList)
 
 	// Запускаем автоматическое обновление писем
-	go autoUpdateEmails(srv, &senderList)
+	go autoUpdateEmails(srv, &senderList, 5*time.Second)
 
 	r := gin.Default()
-
+	r.StaticFS("/static", http.Dir("static"))
 	r.GET("/", func(c *gin.Context) {
 		cache, err := loadCachedEmails(&senderList)
 		if err != nil {
@@ -300,8 +301,10 @@ func main() {
 		}
 
 		pageVariables := PageVariables{
-			Emails: cache.Emails,
+			Emails:  cache.Emails,
+			Senders: senderList.Senders,
 		}
+
 		tmpl, err := template.ParseFiles("index.html")
 		if err != nil {
 			c.String(500, err.Error())
@@ -362,7 +365,7 @@ func main() {
 			return
 		}
 
-		// Перезагружаем список отправителей после удаления
+		// Перезагружаем список отправителей
 		updatedList, err := loadSenders("blackSenders.json")
 		if err != nil {
 			c.JSON(500, gin.H{"error": "Ошибка загрузки обновлённого списка отправителей"})

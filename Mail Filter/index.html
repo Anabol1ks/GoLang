@@ -4,14 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email List</title>
+    <link rel="stylesheet" href="./static/styles.css">
 </head>
 <body>
-    <h1>Email List</h1>
-    <ul>
-        {{range .Emails}}
-        <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
-        {{end}}
-    </ul>
-    <button onclick='window.location.reload()'>Обновить письма</button>
+    <div class="container">
+        <div class="email-list">
+            <h1>Email List <button onclick='window.location.reload()'>Обновить письма</button></h1>
+            <ul>
+                {{range .Emails}}
+                <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
+                {{end}}
+            </ul>
+        </div>
+        <div class="blacklist">
+            <h1>Чёрный список</h1>
+            <label for="newEmail">Добавить почту в чёрный список:</label>
+            <input type="email" id="newEmail" name="newEmail" placeholder="Введите email">
+            <button onclick="addSender()">Добавить</button>
+            <ul>
+                {{range .Senders}}
+                    <li>{{.}}</li>
+                {{else}}
+                    <p>Пусто</p>
+                {{end}}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const addSender = () => {
+            const emailInput = document.getElementById('newEmail');
+            const email = emailInput.value; // Получаем значение
+
+            const data = { email };
+
+            fetch('/senders', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(response => {
+                // Очистка поля после успешной отправки
+                emailInput.value = '';
+                console.log(response);
+            })
+            .catch(error => {
+                // Обработка ошибок
+                console.error('Error:', error);
+            });
+
+            return data;
+        }
+    </script>
 </body>
 </html>

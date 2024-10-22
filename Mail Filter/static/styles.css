@@ -1,0 +1,24 @@
+/* Контейнер для списков */
+.container {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+/* Список писем */
+.email-list {
+  width: 65%;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Чёрный список */
+.blacklist {
+  width: 30%;
+  background-color: #f2f2f2;
+  padding: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
