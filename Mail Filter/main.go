@@ -21,8 +21,9 @@ import (
 )
 
 type Email struct {
-	Sender  string `json:"sender"`
-	Snippet string `json:"snippet"`
+	SenderEmail string `json:"sender_email"`
+	SenderName  string `json:"sender_name"`
+	Snippet     string `json:"snippet"`
 }
 
 type PageVariables struct {
@@ -84,18 +85,18 @@ func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
 	return token
 }
 
-func getSender(headers []*gmail.MessagePartHeader) string {
+func getSender(headers []*gmail.MessagePartHeader) (string, string) {
 	for _, header := range headers {
 		if header.Name == "From" {
 			addr, err := mail.ParseAddress(header.Value)
 			if err != nil {
 				log.Printf("Не удалось разобрать адрес отправителя: %v", err)
-				return header.Value
+				return "", ""
 			}
-			return addr.Address
+			return addr.Address, addr.Name
 		}
 	}
-	return ""
+	return "", ""
 }
 
 type SenderList struct {
@@ -150,7 +151,7 @@ func loadCachedEmails(senderList *SenderList) (CachedEmails, error) {
 	for _, email := range cache.Emails {
 		shouldSkip := false
 		for _, sender := range senderList.Senders {
-			if email.Sender == sender {
+			if email.SenderEmail == sender {
 				shouldSkip = true
 				break
 			}
@@ -198,22 +199,22 @@ func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, re
 			continue
 		}
 
-		sender := getSender(message.Payload.Headers)
-		shouldSkip := false
+		senderEmail, senderName := getSender(message.Payload.Headers)
 
-		// Проверяем, есть ли отправитель в списке
+		// Проверяем, есть ли отправитель в черном списке
+		shouldSkip := false
 		for _, filteredSender := range senderList.Senders {
-			if sender == filteredSender {
+			if senderEmail == filteredSender {
 				shouldSkip = true
 				break
 			}
 		}
 
-		// Если отправителя нет в списке, добавляем письмо в результат
 		if !shouldSkip {
 			emails = append(emails, Email{
-				Sender:  sender,
-				Snippet: message.Snippet,
+				SenderEmail: senderEmail,
+				SenderName:  senderName,
+				Snippet:     message.Snippet,
 			})
 		}
 	}

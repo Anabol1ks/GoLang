@@ -11,9 +11,10 @@
         <div class="email-list">
             <h1>Email List <button onclick='window.location.reload()'>Обновить письма</button></h1>
             <ul>
-                {{range .Emails}}
-                <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
-                {{end}}
+                {{ range .Emails }}
+                    <p><strong>Отправитель:</strong> {{ .SenderName }} ({{ .SenderEmail }})</p>
+                    <p><strong>Сообщение:</strong> {{ .Snippet }}</p>
+                {{ end }}
             </ul>
         </div>
         <div class="blacklist">
