@@ -4,21 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email List</title>
-    <script>
-        function updateEmails() {
-            fetch("/update", { method: "GET" })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === "success") {
-                    alert("Emails updated successfully");
-                    window.location.reload(); // Перезагружаем страницу для отображения обновленных данных
-                } else {
-                    alert("Failed to update emails");
-                }
-            })
-            .catch(error => console.error("Error:", error));
-        }
-    </script>
 </head>
 <body>
     <h1>Email List</h1>
@@ -27,6 +12,6 @@
         <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
         {{end}}
     </ul>
-    <button onclick="updateEmails()">Обновить письма</button>
+    <button onclick='window.location.reload()'>Обновить письма</button>
 </body>
 </html>

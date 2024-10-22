@@ -182,7 +182,7 @@ func saveCachedEmails(emails []Email) error {
 
 // Асинхронная загрузка писем
 func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, resultChan chan<- []Email) {
-	msgList, err := srv.Users.Messages.List(user).MaxResults(25).Do()
+	msgList, err := srv.Users.Messages.List(user).MaxResults(100).Do()
 	if err != nil {
 		log.Printf("Ошибка при получении сообщений: %v", err)
 		resultChan <- nil
