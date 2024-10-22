@@ -1,15 +1,32 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Фильтрация почты</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email List</title>
+    <script>
+        function updateEmails() {
+            fetch("/update", { method: "GET" })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    alert("Emails updated successfully");
+                    window.location.reload(); // Перезагружаем страницу для отображения обновленных данных
+                } else {
+                    alert("Failed to update emails");
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
 </head>
 <body>
-    <h1>Фильтрованные письма</h1>
+    <h1>Email List</h1>
     <ul>
         {{range .Emails}}
-            <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
+        <li><strong>{{.Sender}}</strong>: {{.Snippet}}</li>
         {{end}}
     </ul>
+    <button onclick="updateEmails()">Обновить письма</button>
 </body>
 </html>

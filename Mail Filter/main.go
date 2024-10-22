@@ -128,7 +128,7 @@ func saveSenders(filename string, senderList SenderList) error {
 }
 
 // Кеширование писем
-func loadCachedEmails() (CachedEmails, error) {
+func loadCachedEmails(senderList *SenderList) (CachedEmails, error) {
 	var cache CachedEmails
 	file, err := os.Open("emails_cache.json")
 	if err != nil {
@@ -140,7 +140,27 @@ func loadCachedEmails() (CachedEmails, error) {
 	defer file.Close()
 
 	err = json.NewDecoder(file).Decode(&cache)
-	return cache, err
+	if err != nil {
+		return cache, err
+	}
+
+	// Фильтруем письма, исключая тех отправителей, которые есть в blackSenders.json
+	var filteredEmails []Email
+	for _, email := range cache.Emails {
+		shouldSkip := false
+		for _, sender := range senderList.Senders {
+			if email.Sender == sender {
+				shouldSkip = true
+				break
+			}
+		}
+		if !shouldSkip {
+			filteredEmails = append(filteredEmails, email)
+		}
+	}
+
+	cache.Emails = filteredEmails
+	return cache, nil
 }
 
 func saveCachedEmails(emails []Email) error {
@@ -178,17 +198,67 @@ func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, re
 		}
 
 		sender := getSender(message.Payload.Headers)
+		shouldSkip := false
+
+		// Проверяем, есть ли отправитель в списке
 		for _, filteredSender := range senderList.Senders {
 			if sender == filteredSender {
-				emails = append(emails, Email{
-					Sender:  sender,
-					Snippet: message.Snippet,
-				})
+				shouldSkip = true
 				break
 			}
 		}
+
+		// Если отправителя нет в списке, добавляем письмо в результат
+		if !shouldSkip {
+			emails = append(emails, Email{
+				Sender:  sender,
+				Snippet: message.Snippet,
+			})
+		}
 	}
+
 	resultChan <- emails
+}
+
+// Автоматическое обновление писем каждые n секунд
+func autoUpdateEmails(srv *gmail.Service, senderList *SenderList) {
+	ticker := time.NewTicker(22 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		<-ticker.C
+
+		log.Println("Автоматическое обновление писем...")
+
+		resultChan := make(chan []Email)
+		go fetchEmailsAsync(srv, "me", *senderList, resultChan)
+
+		go func() {
+			emails := <-resultChan
+			if emails != nil {
+				saveCachedEmails(emails)
+				log.Println("Письма обновлены")
+			} else {
+				log.Println("Ошибка при обновлении писем")
+			}
+		}()
+	}
+}
+
+func updateSenderListPeriodically(filePath string, interval time.Duration, senderList *SenderList) {
+	for {
+		updatedList, err := loadSenders(filePath)
+		if err != nil {
+			log.Printf("Ошибка загрузки списка отправителей: %v", err)
+		} else {
+			// Обновляем данные списка отправителей
+			*senderList = updatedList
+			log.Println("Список отправителей обновлен:", senderList.Senders)
+		}
+
+		// Ждем перед следующей проверкой
+		time.Sleep(interval)
+	}
 }
 
 func main() {
@@ -209,31 +279,24 @@ func main() {
 		log.Fatalf("Не удалось создать Gmail клиент: %v", err)
 	}
 
+	// Загружаем список отправителей
+	senderList, err := loadSenders("blackSenders.json")
+	if err != nil {
+		log.Fatalf("Ошибка загрузки списка отправителей: %v", err)
+	}
+
+	// Запускаем горутину для периодического обновления списка отправителей (через указатель)
+	go updateSenderListPeriodically("blackSenders.json", 15*time.Second, &senderList)
+
+	// Запускаем автоматическое обновление писем
+	go autoUpdateEmails(srv, &senderList)
+
 	r := gin.Default()
 
 	r.GET("/", func(c *gin.Context) {
-		cache, err := loadCachedEmails()
+		cache, err := loadCachedEmails(&senderList)
 		if err != nil {
 			log.Printf("Ошибка при чтении кеша: %v", err)
-		}
-
-		// Если кеш обновлялся более 5 минут назад, загружаем новые данные асинхронно
-		if time.Now().Unix()-cache.LastUpdate > 5*60 {
-			senderList, err := loadSenders("senders.json")
-			if err != nil {
-				c.String(500, "Ошибка загрузки списка отправителей")
-				return
-			}
-
-			resultChan := make(chan []Email)
-			go fetchEmailsAsync(srv, "me", senderList, resultChan)
-
-			go func() {
-				emails := <-resultChan
-				if emails != nil {
-					saveCachedEmails(emails)
-				}
-			}()
 		}
 
 		pageVariables := PageVariables{
@@ -257,25 +320,24 @@ func main() {
 			return
 		}
 
-		senderList, err := loadSenders("senders.json")
-		if err != nil {
-			c.JSON(500, gin.H{"error": "Ошибка чтения файла"})
-			return
-		}
-
-		// Добавляем нового отправителя в список
+		// Добавляем нового отправителя
 		senderList.Senders = append(senderList.Senders, newSender.Email)
-
-		// Сохраняем обновлённый список
-		if err := saveSenders("senders.json", senderList); err != nil {
+		if err := saveSenders("blackSenders.json", senderList); err != nil {
 			c.JSON(500, gin.H{"error": "Ошибка сохранения файла"})
 			return
 		}
 
+		// Перезагружаем список отправителей после обновления
+		updatedList, err := loadSenders("blackSenders.json")
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Ошибка загрузки обновлённого списка отправителей"})
+			return
+		}
+		senderList = updatedList
+
 		c.JSON(200, gin.H{"status": "Отправитель добавлен"})
 	})
 
-	// Удаление отправителя
 	r.DELETE("/senders", func(c *gin.Context) {
 		var delSender struct {
 			Email string `json:"email"`
@@ -286,13 +348,7 @@ func main() {
 			return
 		}
 
-		senderList, err := loadSenders("senders.json")
-		if err != nil {
-			c.JSON(500, gin.H{"error": "Ошибка чтения файла"})
-			return
-		}
-
-		// Удаляем отправителя из списка
+		// Удаляем отправителя
 		for i, sender := range senderList.Senders {
 			if sender == delSender.Email {
 				senderList.Senders = append(senderList.Senders[:i], senderList.Senders[i+1:]...)
@@ -301,10 +357,18 @@ func main() {
 		}
 
 		// Сохраняем обновлённый список
-		if err := saveSenders("senders.json", senderList); err != nil {
+		if err := saveSenders("blackSenders.json", senderList); err != nil {
 			c.JSON(500, gin.H{"error": "Ошибка сохранения файла"})
 			return
 		}
+
+		// Перезагружаем список отправителей после удаления
+		updatedList, err := loadSenders("blackSenders.json")
+		if err != nil {
+			c.JSON(500, gin.H{"error": "Ошибка загрузки обновлённого списка отправителей"})
+			return
+		}
+		senderList = updatedList
 
 		c.JSON(200, gin.H{"status": "Отправитель удалён"})
 	})
