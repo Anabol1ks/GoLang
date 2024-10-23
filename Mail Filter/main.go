@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -21,9 +22,11 @@ import (
 )
 
 type Email struct {
-	SenderEmail string `json:"sender_email"`
-	SenderName  string `json:"sender_name"`
-	Snippet     string `json:"snippet"`
+	SenderEmail string   `json:"sender_email"`
+	SenderName  string   `json:"sender_name"`
+	Snippet     string   `json:"snippet"`
+	HTMLBody    string   `json:"html_body"`
+	Attachments []string `json:"attachments"`
 }
 
 type PageVariables struct {
@@ -182,6 +185,36 @@ func saveCachedEmails(emails []Email) error {
 	return json.NewEncoder(file).Encode(cache)
 }
 
+// Извлечение HTML и вложений из письма
+func extractEmailData(message *gmail.Message) (string, []string) {
+	var htmlBody string
+	var attachments []string
+
+	for _, part := range message.Payload.Parts {
+		// Извлечение HTML-контента
+		if part.MimeType == "text/html" {
+			decodedHTML, _ := base64.URLEncoding.DecodeString(part.Body.Data)
+			htmlBody = string(decodedHTML)
+		}
+
+		// Извлечение вложений
+		if part.Filename != "" {
+			attachmentData := part.Body.Data
+			decodedAttachment, _ := base64.URLEncoding.DecodeString(attachmentData)
+			attachmentFileName := fmt.Sprintf("attachments/%s", part.Filename)
+
+			err := ioutil.WriteFile(attachmentFileName, decodedAttachment, 0644)
+			if err != nil {
+				log.Printf("Ошибка при сохранении вложения: %v", err)
+			} else {
+				attachments = append(attachments, attachmentFileName)
+			}
+		}
+	}
+
+	return htmlBody, attachments
+}
+
 // Асинхронная загрузка писем
 func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, resultChan chan<- []Email) {
 	msgList, err := srv.Users.Messages.List(user).MaxResults(100).Do()
@@ -211,10 +244,13 @@ func fetchEmailsAsync(srv *gmail.Service, user string, senderList SenderList, re
 		}
 
 		if !shouldSkip {
+			htmlBody, attachments := extractEmailData(message)
 			emails = append(emails, Email{
 				SenderEmail: senderEmail,
 				SenderName:  senderName,
 				Snippet:     message.Snippet,
+				HTMLBody:    htmlBody,
+				Attachments: attachments,
 			})
 		}
 	}
@@ -253,14 +289,15 @@ func updateSenderListPeriodically(filePath string, interval time.Duration, sende
 		if err != nil {
 			log.Printf("Ошибка загрузки списка отправителей: %v", err)
 		} else {
-			// Обновляем данные списка отправителей
 			*senderList = updatedList
 			log.Println("Список отправителей обновлен:", senderList.Senders)
 		}
 
-		// Ждем перед следующей проверкой
 		time.Sleep(interval)
 	}
+}
+func safeHTML(s string) template.HTML {
+	return template.HTML(s)
 }
 
 func main() {
@@ -287,31 +324,32 @@ func main() {
 		log.Fatalf("Ошибка загрузки списка отправителей: %v", err)
 	}
 
-	// Запускаем горутину для периодического обновления списка отправителей (через указатель)
-	go updateSenderListPeriodically("blackSenders.json", 2*time.Second, &senderList)
-
-	// Запускаем автоматическое обновление писем
-	go autoUpdateEmails(srv, &senderList, 5*time.Second)
+	cache, err := loadCachedEmails(&senderList)
+	if err != nil {
+		log.Printf("Ошибка загрузки кэша писем: %v", err)
+	}
 
 	r := gin.Default()
-	r.StaticFS("/static", http.Dir("static"))
-	r.GET("/", func(c *gin.Context) {
-		cache, err := loadCachedEmails(&senderList)
-		if err != nil {
-			log.Printf("Ошибка при чтении кеша: %v", err)
-		}
 
-		pageVariables := PageVariables{
-			Emails:  cache.Emails,
+	// Асинхронная периодическая проверка отправителей
+	go updateSenderListPeriodically("blackSenders.json", 2*time.Second, &senderList)
+
+	// Запуск автообновления писем
+	go autoUpdateEmails(srv, &senderList, 5*time.Second)
+
+	r.GET("/emails", func(c *gin.Context) {
+		cachedEmails := cache.Emails
+		pageVars := PageVariables{
+			Emails:  cachedEmails,
 			Senders: senderList.Senders,
 		}
 
-		tmpl, err := template.ParseFiles("index.html")
+		tmpl, err := template.ParseFiles("templates/emails.html")
 		if err != nil {
-			c.String(500, err.Error())
-			return
+			log.Fatalf("Ошибка при парсинге шаблона: %v", err)
 		}
-		tmpl.Execute(c.Writer, pageVariables)
+
+		tmpl.Execute(c.Writer, pageVars)
 	})
 
 	r.POST("/senders", func(c *gin.Context) {
@@ -377,8 +415,32 @@ func main() {
 		c.JSON(200, gin.H{"status": "Отправитель удалён"})
 	})
 
-	log.Println("Сервер запущен на :8080")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatalf("Не удалось запустить сервер: %v", err)
-	}
+	r.GET("/email/:senderEmail", func(c *gin.Context) {
+		senderEmail := c.Param("senderEmail")
+		var selectedEmail *Email
+
+		for _, email := range cache.Emails {
+			if email.SenderEmail == senderEmail {
+				selectedEmail = &email
+				break
+			}
+		}
+
+		if selectedEmail == nil {
+			c.String(http.StatusNotFound, "Письмо не найдено")
+			return
+		}
+
+		tmpl, err := template.New("email_details.html").Funcs(template.FuncMap{
+			"safeHTML": safeHTML,
+		}).ParseFiles("templates/email_details.html")
+
+		if err != nil {
+			log.Fatalf("Ошибка при парсинге шаблона: %v", err)
+		}
+
+		tmpl.Execute(c.Writer, selectedEmail)
+	})
+
+	r.Run(":8080")
 }

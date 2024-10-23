@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр письма</title>
+    <link rel="stylesheet" href="./static/styles.css">
+</head>
+<body>
+    <div class="email-details">
+        <h1>Просмотр письма</h1>
+        <p><strong>Отправитель:</strong> {{ .SenderName }} ({{ .SenderEmail }})</p>
+        <p><strong>Email:</strong> {{ .SenderEmail }}</p>
+        <p><strong>Содержание:</strong></p>
+        <div class="email-body">
+            {{ .HTMLBody | safeHTML }}
+        </div>
+        {{ if .Attachments }}
+        <h3>Вложения:</h3>
+        <ul>
+            {{ range .Attachments }}
+                <li><a href="{{ . }}" download>Скачать {{ . }}</a></li>
+            {{ end }}
+        </ul>
+        {{ end }}
+        <button onclick="window.history.back()">Назад</button>
+    </div>
+</body>
+</html>
