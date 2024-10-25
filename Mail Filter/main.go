@@ -18,6 +18,7 @@ import (
 	"google.golang.org/api/gmail/v1"
 
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/browser"
 )
 
 type Email struct {
@@ -70,18 +71,49 @@ func getClient(config *oauth2.Config) *http.Client {
 }
 
 func getTokenFromWeb(config *oauth2.Config) *oauth2.Token {
-	authURL := config.AuthCodeURL("state-token", oauth2.AccessTypeOffline)
-	fmt.Printf("Перейдите по следующей ссылке для авторизации: \n%v\n", authURL)
+	// Запускаем временный HTTP-сервер на локальном хосте для получения кода авторизации
+	state := "state-token"
+	authURL := config.AuthCodeURL(state, oauth2.AccessTypeOffline)
+	fmt.Printf("Откройте в браузере следующую ссылку для авторизации: \n%v\n", authURL)
 
-	var authCode string
-	if _, err := fmt.Scan(&authCode); err != nil {
-		log.Fatalf("Не удалось считать код авторизации: %v", err)
+	// Открываем браузер
+	err := browser.OpenURL(authURL)
+	if err != nil {
+		log.Fatalf("Не удалось открыть браузер: %v", err)
 	}
 
-	token, err := config.Exchange(context.TODO(), authCode)
+	// Создаем канал для получения кода авторизации
+	codeCh := make(chan string)
+
+	// Запускаем временный сервер для прослушивания кода авторизации
+	srv := &http.Server{Addr: "localhost:8080"}
+
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("state") != state {
+			http.Error(w, "State неверен", http.StatusBadRequest)
+			return
+		}
+		code := r.URL.Query().Get("code")
+		fmt.Fprintf(w, "Код авторизации получен, можете закрыть это окно.")
+		codeCh <- code
+		srv.Shutdown(context.TODO()) // Останавливаем сервер после получения кода
+	})
+
+	go func() {
+		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+			log.Fatalf("Сервер авторизации остановлен: %v", err)
+		}
+	}()
+
+	// Ждем получения кода
+	code := <-codeCh
+
+	// Обмениваем код на токен
+	token, err := config.Exchange(context.TODO(), code)
 	if err != nil {
 		log.Fatalf("Не удалось получить токен доступа: %v", err)
 	}
+
 	return token
 }
 
