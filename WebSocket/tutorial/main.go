@@ -2,9 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
@@ -12,33 +12,51 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
-func echo(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+var hub = NewHub()
+
+func wsHandler(c *gin.Context) {
+	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		log.Println("Ошибка при установке WebSocket - соединения:", err)
+		fmt.Println("Ошибка при обновлении соединения:", err)
 		return
 	}
 
-	defer conn.Close()
+	client := &Client{conn: conn, send: make(chan []byte)}
+	hub.register <- client
 
+	go client.readMessage()
+	go client.writeMessage()
+}
+func (c *Client) readMessage() {
+	defer func() {
+		hub.unregister <- c
+		c.conn.Close()
+	}()
 	for {
-		messageType, message, err := conn.ReadMessage()
+		_, message, err := c.conn.ReadMessage()
 		if err != nil {
-			log.Println("Ошибка при чтении сообщения:", err)
 			break
 		}
-		fmt.Printf("Получено сообщение от клиента: %s\n", message)
+		hub.broadcast <- message
+	}
+}
 
-		if err := conn.WriteMessage(messageType, message); err != nil {
-			log.Println("Ошибка при отправке сообщения:", err)
+func (c *Client) writeMessage() {
+	defer c.conn.Close()
+	for message := range c.send {
+		if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
 			break
 		}
 	}
 }
 
 func main() {
-	http.HandleFunc("/echo", echo)
+	go hub.Run()
 
-	fmt.Println("Сервер запущен на порту 8080...")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	r := gin.Default()
+
+	r.GET("/ws", wsHandler)
+
+	fmt.Println("Сервер запущен на порту 8080")
+	r.Run(":8080")
 }
