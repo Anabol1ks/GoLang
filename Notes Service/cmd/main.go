@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"notes-service/internal/notes"
+	"notes-service/internal/storage"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -13,13 +15,22 @@ func main() {
 	if err != nil {
 		log.Fatal("Ошибка загрузки .env файла")
 	}
+
+	storage.ConnectDatabase()
+
+	err = storage.DB.AutoMigrate(&notes.Note{})
+	if err != nil {
+		log.Fatal("Ошибка миграции!", err.Error())
+	}
 	port := os.Getenv("PORT")
 
 	r := gin.Default()
 
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Привет, всё ок"})
-	})
+	r.POST("/notes", notes.CreateNoteHandler)
+	r.GET("/notes", notes.GetNotesHandler)
+	r.GET("/notes/:id", notes.GetNoteHandler)
+	r.PUT("/notes/:id", notes.UpdateNoteHandler)
+	r.DELETE("/notes/:id", notes.DeleteNoteHandler)
 
 	err = r.Run(":" + port)
 	if err != nil {
