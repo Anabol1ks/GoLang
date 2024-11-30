@@ -118,6 +118,11 @@ const docTemplate = `{
         },
         "/notes": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Возвращает все заметки текущего пользователя с возможностью фильтрации",
                 "consumes": [
                     "application/json"
@@ -171,6 +176,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Создает новую заметку для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -223,6 +233,11 @@ const docTemplate = `{
         },
         "/notes/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Возвращает заметку по ID для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -271,6 +286,11 @@ const docTemplate = `{
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Обновляет данные заметки для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -346,6 +366,11 @@ const docTemplate = `{
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Удаляет заметку для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -416,6 +441,13 @@ const docTemplate = `{
         },
         "notes.Note": {
             "type": "object"
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`

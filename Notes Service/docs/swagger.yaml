@@ -114,6 +114,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Получение списка заметок
       tags:
       - notes
@@ -147,6 +149,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Создание новой заметки
       tags:
       - notes
@@ -182,6 +186,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Удаление заметки по ID
       tags:
       - notes
@@ -214,6 +220,8 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Получение заметки по ID
       tags:
       - notes
@@ -264,7 +272,14 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Обновление заметки по ID
       tags:
       - notes
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

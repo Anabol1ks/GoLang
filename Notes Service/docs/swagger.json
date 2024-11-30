@@ -107,6 +107,11 @@
         },
         "/notes": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Возвращает все заметки текущего пользователя с возможностью фильтрации",
                 "consumes": [
                     "application/json"
@@ -160,6 +165,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Создает новую заметку для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -212,6 +222,11 @@
         },
         "/notes/{id}": {
             "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Возвращает заметку по ID для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -260,6 +275,11 @@
                 }
             },
             "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Обновляет данные заметки для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -335,6 +355,11 @@
                 }
             },
             "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Удаляет заметку для текущего пользователя",
                 "consumes": [
                     "application/json"
@@ -405,6 +430,13 @@
         },
         "notes.Note": {
             "type": "object"
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }

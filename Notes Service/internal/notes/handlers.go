@@ -11,6 +11,7 @@ import (
 // @Summary Создание новой заметки
 // @Description Создает новую заметку для текущего пользователя
 // @Tags notes
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param note body notes.Note true "Данные заметки"
@@ -39,6 +40,7 @@ func CreateNoteHandler(c *gin.Context) {
 // @Summary Получение списка заметок
 // @Description Возвращает все заметки текущего пользователя с возможностью фильтрации
 // @Tags notes
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param search query string false "Поиск по названию или описанию"
@@ -77,6 +79,7 @@ func GetNotesHandler(c *gin.Context) {
 // @Summary Получение заметки по ID
 // @Description Возвращает заметку по ID для текущего пользователя
 // @Tags notes
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "ID заметки"
@@ -99,6 +102,7 @@ func GetNoteHandler(c *gin.Context) {
 // @Summary Обновление заметки по ID
 // @Description Обновляет данные заметки для текущего пользователя
 // @Tags notes
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "ID заметки"
@@ -139,6 +143,7 @@ func UpdateNoteHandler(c *gin.Context) {
 // @Summary Удаление заметки по ID
 // @Description Удаляет заметку для текущего пользователя
 // @Tags notes
+// @Security BearerAuth
 // @Accept json
 // @Produce json
 // @Param id path int true "ID заметки"

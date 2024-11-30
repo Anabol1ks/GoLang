@@ -17,6 +17,9 @@ import (
 	"github.com/robfig/cron"
 )
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	err := godotenv.Load()
 	if err != nil {
