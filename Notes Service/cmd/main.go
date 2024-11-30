@@ -7,6 +7,11 @@ import (
 	"notes-service/internal/storage"
 	"os"
 
+	_ "notes-service/docs"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"github.com/robfig/cron"
@@ -35,6 +40,8 @@ func main() {
 	defer c.Stop()
 
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("/auth/register", auth.RegisterHandler)
 	r.POST("/auth/login", auth.LoginHandler)

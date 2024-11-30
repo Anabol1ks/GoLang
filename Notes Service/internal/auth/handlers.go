@@ -16,6 +16,16 @@ type LoginInput struct {
 	Password string `json:"password" binding:"required"`
 }
 
+// RegisterHandler godoc
+// @Summary Регистрация нового пользователя
+// @Description Регистрирует нового пользователя с указанием имени и пароля
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body auth.LoginInput true "Данные пользователя"
+// @Success 201 {object} map[string]string "Успешная регистрация"
+// @Failure 400 {object} map[string]string "Ошибка валидации"
+// @Router /auth/register [post]
 func RegisterHandler(c *gin.Context) {
 	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -38,6 +48,17 @@ func RegisterHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Успешная регистрация"})
 }
 
+// LoginHandler godoc
+// @Summary Авторизация пользователя
+// @Description Производит авторизацию пользователя по имени пользователя и паролю, возвращая токен для доступа
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param input body auth.LoginInput true "Данные для входа"
+// @Success 200 {object} map[string]string "Токен доступа"
+// @Failure 400 {object} map[string]string "Ошибка валидации данных"
+// @Failure 401 {object} map[string]string "Неправильный логин или пароль"
+// @Router /auth/login [post]
 func LoginHandler(c *gin.Context) {
 	var input LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
