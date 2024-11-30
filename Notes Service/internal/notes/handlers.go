@@ -27,8 +27,22 @@ func CreateNoteHandler(c *gin.Context) {
 func GetNotesHandler(c *gin.Context) {
 	userID := c.GetUint("user_id") // Получаем ID текущего пользователя
 
+	search := c.Query("search")   //поиск по названию
+	startDate := c.Query("start") // Начальная карта
+	endDate := c.Query("end")     // Конечная карта
+
 	var notes []Note
-	if err := storage.DB.Where("user_id = ?", userID).Find(&notes).Error; err != nil {
+	query := storage.DB.Where("user_id = ?", userID)
+
+	if search != "" {
+		query = query.Where("title ILIKE ? OR description ILIKE ?", "%"+search+"%", "%"+search+"%")
+	}
+
+	if startDate != "" && endDate != "" {
+		query = query.Where("created_at BETWEEN ? AND ?", startDate, endDate)
+	}
+
+	if err := query.Find(&notes).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch notes"})
 		return
 	}
@@ -74,11 +88,19 @@ func UpdateNoteHandler(c *gin.Context) {
 }
 
 func DeleteNoteHandler(c *gin.Context) {
+	userID := c.GetUint("user_id")
 	id := c.Param("id")
 
-	if err := storage.DB.Delete(&Note{}, id).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Ошибка удаления заметки"})
+	var note Note
+	if err := storage.DB.Where("id = ? AND user_id = ?", id, userID).First(&note).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Note not found"})
+		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Заметка удалена"})
+	if err := storage.DB.Delete(&note).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete note"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Note deleted"})
 }

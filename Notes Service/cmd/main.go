@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"github.com/robfig/cron"
 )
 
 func main() {
@@ -24,6 +25,14 @@ func main() {
 		log.Fatal("Ошибка миграции!", err.Error())
 	}
 	port := os.Getenv("PORT")
+
+	c := cron.New()
+	c.AddFunc("@daily", func() {
+		notes.CleanupDeletedNotes()
+	})
+	c.Start()
+
+	defer c.Stop()
 
 	r := gin.Default()
 
