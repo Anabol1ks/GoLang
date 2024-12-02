@@ -104,8 +104,8 @@ const docTemplate = `{
                             }
                         }
                     },
-                    "400": {
-                        "description": "Ошибка валидации",
+                    "500": {
+                        "description": "Ошибка хеширования или создания пользователя",
                         "schema": {
                             "type": "object",
                             "additionalProperties": {

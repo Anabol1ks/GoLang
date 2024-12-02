@@ -24,7 +24,7 @@ type LoginInput struct {
 // @Produce json
 // @Param input body auth.LoginInput true "Данные пользователя"
 // @Success 201 {object} map[string]string "Успешная регистрация"
-// @Failure 400 {object} map[string]string "Ошибка валидации"
+// @Failure 500 {object} map[string]string "Ошибка хеширования или создания пользователя"
 // @Router /auth/register [post]
 func RegisterHandler(c *gin.Context) {
 	var input LoginInput

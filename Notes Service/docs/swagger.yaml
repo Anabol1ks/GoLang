@@ -72,8 +72,8 @@ paths:
             additionalProperties:
               type: string
             type: object
-        "400":
-          description: Ошибка валидации
+        "500":
+          description: Ошибка хеширования или создания пользователя
           schema:
             additionalProperties:
               type: string
