@@ -4,6 +4,7 @@ import (
 	"chat_app/internal/auth"
 	"chat_app/internal/chat"
 	"chat_app/internal/storage"
+	"chat_app/internal/ws"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,9 @@ func main() {
 
 	r.POST("auth/register", auth.RegisterHandler)
 	r.POST("auth/login", auth.LoginHandler)
+
+	go ws.HandleMessage()
+	r.GET("/ws", ws.HandleConnections)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Ошибка запуска сервера")
