@@ -29,8 +29,13 @@ func main() {
 	r.POST("auth/register", auth.RegisterHandler)
 	r.POST("auth/login", auth.LoginHandler)
 
-	go ws.HandleMessage()
-	r.GET("/ws", ws.HandleConnections)
+	r.GET("/ws/:room_id", ws.HandleConnections)
+
+	authorized := r.Group("/")
+	authorized.Use(auth.AuthMiddleware())
+	authorized.POST("/rooms", chat.CreateRoomHandler)
+	authorized.GET("/rooms", chat.GetRoomsHandler)
+	authorized.GET("/rooms/:room_id/messages", chat.GetRoomMessage)
 
 	if err := r.Run(":8080"); err != nil {
 		log.Fatal("Ошибка запуска сервера")
