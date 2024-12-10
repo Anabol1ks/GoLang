@@ -1,6 +1,7 @@
 package ws
 
 import (
+	"chat_app/internal/auth"
 	"chat_app/internal/chat"
 	"chat_app/internal/storage"
 	"log"
@@ -30,10 +31,15 @@ type Message struct {
 	Content  string `json:"content"`
 }
 
-var clients = make(map[*websocket.Conn]bool)
-
 func HandleConnections(c *gin.Context) {
 	userID := c.GetUint("user_id")
+
+	var user auth.User
+	if err := storage.DB.First(&user, userID).Error; err != nil {
+		log.Println("Пользователь не найден")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Не удалось найти пользователя"})
+		return
+	}
 
 	roomID, err := strconv.Atoi(c.Param("room_id"))
 	if err != nil {
@@ -47,7 +53,17 @@ func HandleConnections(c *gin.Context) {
 		log.Println("Не удалось обновить соединение:", err)
 		return
 	}
-	defer ws.Close()
+	defer func() {
+		room := rooms[uint(roomID)]
+		delete(room.Clients, ws)
+		ws.Close()
+
+		room.Broadcast <- Message{
+			RoomID:   uint(roomID),
+			Username: user.Username,
+			Content:  "Покинул комнату",
+		}
+	}()
 
 	if rooms[uint(roomID)] == nil {
 		rooms[uint(roomID)] = &RoomClients{
@@ -59,6 +75,12 @@ func HandleConnections(c *gin.Context) {
 
 	room := rooms[uint(roomID)]
 	room.Clients[ws] = true
+
+	room.Broadcast <- Message{
+		RoomID:   uint(roomID),
+		Username: user.Username,
+		Content:  "Присоединился к комнате",
+	}
 
 	for {
 		var msg Message
