@@ -4,6 +4,7 @@ import (
 	"chat_app/internal/auth"
 	"chat_app/internal/chat"
 	"chat_app/internal/storage"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -26,14 +27,14 @@ var upgrader = websocket.Upgrader{
 }
 
 type Message struct {
-	RoomID   uint   `json:"room_id"`
-	Username string `json:"username"`
-	Content  string `json:"content"`
+	Content string `json:"content"`
 }
 
 func HandleConnections(c *gin.Context) {
+	// Извлекаем user_id из контекста
 	userID := c.GetUint("user_id")
 
+	// Получаем данные пользователя
 	var user auth.User
 	if err := storage.DB.First(&user, userID).Error; err != nil {
 		log.Println("Пользователь не найден")
@@ -41,13 +42,15 @@ func HandleConnections(c *gin.Context) {
 		return
 	}
 
+	// Получаем ID комнаты
 	roomID, err := strconv.Atoi(c.Param("room_id"))
 	if err != nil {
-		log.Println("Неверный id комнаты")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный id комнаты"})
+		log.Println("Неверный ID комнаты")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Неверный ID комнаты"})
 		return
 	}
 
+	// Обновляем соединение до WebSocket
 	ws, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		log.Println("Не удалось обновить соединение:", err)
@@ -58,13 +61,13 @@ func HandleConnections(c *gin.Context) {
 		delete(room.Clients, ws)
 		ws.Close()
 
+		// Уведомляем об уходе пользователя
 		room.Broadcast <- Message{
-			RoomID:   uint(roomID),
-			Username: user.Username,
-			Content:  "Покинул комнату",
+			Content: fmt.Sprintf("%s покинул комнату", user.Username),
 		}
 	}()
 
+	// Регистрируем комнату, если её ещё нет
 	if rooms[uint(roomID)] == nil {
 		rooms[uint(roomID)] = &RoomClients{
 			Clients:   make(map[*websocket.Conn]bool),
@@ -73,37 +76,40 @@ func HandleConnections(c *gin.Context) {
 		go HandleRoomMessages(uint(roomID))
 	}
 
+	// Регистрируем клиента в комнате
 	room := rooms[uint(roomID)]
 	room.Clients[ws] = true
 
+	// Уведомляем о присоединении
 	room.Broadcast <- Message{
-		RoomID:   uint(roomID),
-		Username: user.Username,
-		Content:  "Присоединился к комнате",
+		Content: fmt.Sprintf("%s присоединился к комнате", user.Username),
 	}
 
+	// Чтение сообщений
 	for {
-		var msg Message
-		err := ws.ReadJSON(&msg)
+		var receivedMsg Message
+		err := ws.ReadJSON(&receivedMsg)
 		if err != nil {
 			log.Printf("Ошибка чтения сообщения: %v\n", err)
-			delete(room.Clients, ws)
 			break
 		}
 
-		msg.RoomID = uint(roomID)
+		// Добавляем имя пользователя к сообщению
+		msg := Message{
+			Content: fmt.Sprintf("%s: %s", user.Username, receivedMsg.Content),
+		}
 		room.Broadcast <- msg
 
+		// Сохраняем сообщение в базе данных
 		msgDB := chat.Message{
-			RoomID:  msg.RoomID,
+			RoomID:  uint(roomID),
 			UserID:  userID,
-			Content: msg.Content,
+			Content: receivedMsg.Content,
 		}
 		if err := storage.DB.Create(&msgDB).Error; err != nil {
-			log.Printf("Ошибка сохранения сообщение: %v\n", err)
+			log.Printf("Ошибка сохранения сообщения: %v\n", err)
 		}
 	}
-
 }
 
 func HandleRoomMessages(roomID uint) {
