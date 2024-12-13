@@ -1,16 +1,23 @@
 package main
 
 import (
+	_ "chat_app/docs"
 	"chat_app/internal/auth"
 	"chat_app/internal/chat"
 	"chat_app/internal/storage"
 	"chat_app/internal/ws"
 	"log"
 
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 )
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -25,6 +32,8 @@ func main() {
 	}
 
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	r.POST("auth/register", auth.RegisterHandler)
 	r.POST("auth/login", auth.LoginHandler)

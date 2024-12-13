@@ -1,0 +1,113 @@
+definitions:
+  auth.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  auth.LoginInput:
+    properties:
+      email_or_username:
+        type: string
+      password:
+        type: string
+    required:
+    - email_or_username
+    - password
+    type: object
+  auth.RegisterInput:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  auth.SuccessResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  auth.TokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+info:
+  contact: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Производит авторизацию пользователя по имени пользователя и паролю,
+        возвращая токен для доступа
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Токен доступа
+          schema:
+            $ref: '#/definitions/auth.TokenResponse'
+        "400":
+          description: Неверные данные для входа
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "401":
+          description: Неверные данные для входа
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Ошибка генерации токена
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      summary: Авторизация пользователя
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Регистрирует нового пользователя с указанием имени и пароля
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/auth.RegisterInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Пользователь успешно зарегистрирован
+          schema:
+            $ref: '#/definitions/auth.SuccessResponse'
+        "409":
+          description: Имя пользователя или почта уже используется
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+        "500":
+          description: Ошибка хеширования или создания пользователя
+          schema:
+            $ref: '#/definitions/auth.ErrorResponse'
+      summary: Регистрация нового пользователя
+      tags:
+      - auth
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
