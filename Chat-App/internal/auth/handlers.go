@@ -79,7 +79,6 @@ type LoginInput struct {
 // @Success 200 {object} TokenResponse "Токен доступа"
 // @Success 500 {object} ErrorResponse "Ошибка генерации токена"
 // @Failure 401 {object} ErrorResponse "Неверные данные для входа"
-// @Failure 400 {object} ErrorResponse "Неверные данные для входа"
 // @Router /auth/login [post]
 func LoginHandler(c *gin.Context) {
 	var input LoginInput

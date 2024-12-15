@@ -46,12 +46,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/auth.TokenResponse"
                         }
                     },
-                    "400": {
-                        "description": "Неверные данные для входа",
-                        "schema": {
-                            "$ref": "#/definitions/auth.ErrorResponse"
-                        }
-                    },
                     "401": {
                         "description": "Неверные данные для входа",
                         "schema": {
