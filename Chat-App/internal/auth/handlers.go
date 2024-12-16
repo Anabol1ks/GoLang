@@ -24,9 +24,9 @@ type RegisterInput struct {
 // @Accept json
 // @Produce json
 // @Param input body auth.RegisterInput true "Данные пользователя"
-// @Failure 201 {object} SuccessResponse "Пользователь успешно зарегистрирован"
-// @Failure 500 {object} ErrorResponse "Ошибка хеширования или создания пользователя"
-// @Failure 409 {object} ErrorResponse "Имя пользователя или почта уже используется"
+// @Failure 201 {object} swg.SuccessResponse "Пользователь успешно зарегистрирован"
+// @Failure 500 {object} swg.ErrorResponse "Ошибка хеширования или создания пользователя"
+// @Failure 409 {object} swg.ErrorResponse "Имя пользователя или почта уже используется"
 // @Router /auth/register [post]
 func RegisterHandler(c *gin.Context) {
 	var input RegisterInput
@@ -76,9 +76,9 @@ type LoginInput struct {
 // @Accept json
 // @Produce json
 // @Param input body auth.LoginInput true "Данные для входа"
-// @Success 200 {object} TokenResponse "Токен доступа"
-// @Success 500 {object} ErrorResponse "Ошибка генерации токена"
-// @Failure 401 {object} ErrorResponse "Неверные данные для входа"
+// @Success 200 {object} swg.TokenResponse "Токен доступа"
+// @Failure 500 {object} swg.ErrorResponse "Ошибка генерации токена"
+// @Failure 401 {object} swg.ErrorResponse "Неверные данные для входа"
 // @Router /auth/login [post]
 func LoginHandler(c *gin.Context) {
 	var input LoginInput

@@ -7,6 +7,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetRoomMessage godoc
+// @Summary Получения истории чата комнаты
+// @Description Получения истории чата комнаты после авторизации
+// @Tags rooms
+// @Security BearerAuth
+// @Param room_id path int true "ID комнаты"
+// @Accept json
+// @Produce json
+// @Router /rooms/{room_id}/messages [get]
 func GetRoomMessage(c *gin.Context) {
 	roomID := c.Param("room_id")
 
@@ -19,6 +28,17 @@ func GetRoomMessage(c *gin.Context) {
 	c.JSON(http.StatusOK, messages)
 }
 
+// GetRoomsHandler godoc
+// @Summary Получения списка комнат
+// @Description Получения списка доступных комнат после авторизации
+// @Tags rooms
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {array} chat.Room "Список комнат"
+// @Failure 401 {object} swg.ErrorResponse "Требуется авторизация"
+// @Failure 500 {object} swg.ErrorResponse "Не удалось получить список комнат"
+// @Router /rooms [get]
 func GetRoomsHandler(c *gin.Context) {
 	var rooms []Room
 	if err := storage.DB.Find(&rooms).Error; err != nil {

@@ -1,9 +1,4 @@
 definitions:
-  auth.ErrorResponse:
-    properties:
-      error:
-        type: string
-    type: object
   auth.LoginInput:
     properties:
       email_or_username:
@@ -27,12 +22,22 @@ definitions:
     - password
     - username
     type: object
-  auth.SuccessResponse:
+  chat.Room:
+    properties:
+      name:
+        type: string
+    type: object
+  swg.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  swg.SuccessResponse:
     properties:
       message:
         type: string
     type: object
-  auth.TokenResponse:
+  swg.TokenResponse:
     properties:
       token:
         type: string
@@ -59,15 +64,15 @@ paths:
         "200":
           description: Токен доступа
           schema:
-            $ref: '#/definitions/auth.TokenResponse'
+            $ref: '#/definitions/swg.TokenResponse'
         "401":
           description: Неверные данные для входа
           schema:
-            $ref: '#/definitions/auth.ErrorResponse'
+            $ref: '#/definitions/swg.ErrorResponse'
         "500":
           description: Ошибка генерации токена
           schema:
-            $ref: '#/definitions/auth.ErrorResponse'
+            $ref: '#/definitions/swg.ErrorResponse'
       summary: Авторизация пользователя
       tags:
       - auth
@@ -89,18 +94,64 @@ paths:
         "201":
           description: Пользователь успешно зарегистрирован
           schema:
-            $ref: '#/definitions/auth.SuccessResponse'
+            $ref: '#/definitions/swg.SuccessResponse'
         "409":
           description: Имя пользователя или почта уже используется
           schema:
-            $ref: '#/definitions/auth.ErrorResponse'
+            $ref: '#/definitions/swg.ErrorResponse'
         "500":
           description: Ошибка хеширования или создания пользователя
           schema:
-            $ref: '#/definitions/auth.ErrorResponse'
+            $ref: '#/definitions/swg.ErrorResponse'
       summary: Регистрация нового пользователя
       tags:
       - auth
+  /rooms:
+    get:
+      consumes:
+      - application/json
+      description: Получения списка доступных комнат после авторизации
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Список комнат
+          schema:
+            items:
+              $ref: '#/definitions/chat.Room'
+            type: array
+        "401":
+          description: Требуется авторизация
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+        "500":
+          description: Не удалось получить список комнат
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Получения списка комнат
+      tags:
+      - rooms
+  /rooms/{room_id}/messages:
+    get:
+      consumes:
+      - application/json
+      description: Получения истории чата комнаты после авторизации
+      parameters:
+      - description: ID комнаты
+        in: path
+        name: room_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses: {}
+      security:
+      - BearerAuth: []
+      summary: Получения истории чата комнаты
+      tags:
+      - rooms
 securityDefinitions:
   BearerAuth:
     in: header

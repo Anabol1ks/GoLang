@@ -3,8 +3,8 @@ package chat
 import "gorm.io/gorm"
 
 type Room struct {
-	gorm.Model
-	Name string `gorm:"type:varchar(100);unique;not null"`
+	Name       string `gorm:"type:varchar(100);unique;not null"`
+	gorm.Model `swaggerignore:"true"`
 }
 
 type Message struct {

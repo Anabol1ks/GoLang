@@ -1,4 +1,4 @@
-package auth
+package swg
 
 type SuccessResponse struct {
 	Message string `json:"message"`
