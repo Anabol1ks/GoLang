@@ -148,6 +148,61 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Создаёт комнату для подключения пользователей",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "rooms"
+                ],
+                "summary": "Создание комнаты",
+                "parameters": [
+                    {
+                        "description": "Данные комнаты",
+                        "name": "room",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/chat.Room"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Созданная комната",
+                        "schema": {
+                            "$ref": "#/definitions/chat.Room"
+                        }
+                    },
+                    "401": {
+                        "description": "Неверный токен",
+                        "schema": {
+                            "$ref": "#/definitions/swg.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Комната с таким названием уже существует",
+                        "schema": {
+                            "$ref": "#/definitions/swg.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Не удалось создать комнату",
+                        "schema": {
+                            "$ref": "#/definitions/swg.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/rooms/{room_id}/messages": {
@@ -178,6 +233,58 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            }
+        },
+        "/ws/{room_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Устанавливает WebSocket-соединение с указанной комнатой. Используйте ws:// или wss:// для подключения.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "ws"
+                ],
+                "summary": "Подключение к комнате",
+                "parameters": [
+                    {
+                        "description": "Сообщение",
+                        "name": "input",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/ws.Message"
+                        }
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ID комнаты",
+                        "name": "room_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "400": {
+                        "description": "Неверный ID комнаты",
+                        "schema": {
+                            "$ref": "#/definitions/swg.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Не удалось найти пользователя",
+                        "schema": {
+                            "$ref": "#/definitions/swg.ErrorResponse"
+                        }
+                    }
+                }
             }
         }
     },
@@ -244,6 +351,14 @@ const docTemplate = `{
             "type": "object",
             "properties": {
                 "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "ws.Message": {
+            "type": "object",
+            "properties": {
+                "content": {
                     "type": "string"
                 }
             }

@@ -30,6 +30,18 @@ type Message struct {
 	Content string `json:"content"`
 }
 
+// HandleConnections godoc
+// @Summary Подключение к комнате
+// @Description Устанавливает WebSocket-соединение с указанной комнатой. Используйте ws:// или wss:// для подключения.
+// @Tags ws
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param input body Message true "Сообщение"
+// @Param room_id path int true "ID комнаты"
+// @Failure 400 {object} swg.ErrorResponse "Неверный ID комнаты"
+// @Failure 409 {object} swg.ErrorResponse "Не удалось найти пользователя"
+// @Router /ws/{room_id} [get]
 func HandleConnections(c *gin.Context) {
 	// Извлекаем user_id из контекста
 	userID := c.GetUint("user_id")

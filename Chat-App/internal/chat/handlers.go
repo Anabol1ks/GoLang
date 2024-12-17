@@ -49,6 +49,19 @@ func GetRoomsHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, rooms)
 }
 
+// CreateRoomHandler godoc
+// @Summary Создание комнаты
+// @Description Создаёт комнату для подключения пользователей
+// @Tags rooms
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param room body chat.Room true "Данные комнаты"
+// @Success 201 {object} chat.Room "Созданная комната"
+// @Failure 409 {object} swg.ErrorResponse "Комната с таким названием уже существует"
+// @Failure 401 {object} swg.ErrorResponse "Неверный токен"
+// @Failure 500 {object} swg.ErrorResponse "Не удалось создать комнату"
+// @Router /rooms [post]
 func CreateRoomHandler(c *gin.Context) {
 	var input struct {
 		Name string `json:"name" binding:"required"`

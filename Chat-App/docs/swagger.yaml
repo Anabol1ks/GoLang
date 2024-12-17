@@ -42,6 +42,11 @@ definitions:
       token:
         type: string
     type: object
+  ws.Message:
+    properties:
+      content:
+        type: string
+    type: object
 info:
   contact: {}
 paths:
@@ -133,6 +138,41 @@ paths:
       summary: Получения списка комнат
       tags:
       - rooms
+    post:
+      consumes:
+      - application/json
+      description: Создаёт комнату для подключения пользователей
+      parameters:
+      - description: Данные комнаты
+        in: body
+        name: room
+        required: true
+        schema:
+          $ref: '#/definitions/chat.Room'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Созданная комната
+          schema:
+            $ref: '#/definitions/chat.Room'
+        "401":
+          description: Неверный токен
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+        "409":
+          description: Комната с таким названием уже существует
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+        "500":
+          description: Не удалось создать комнату
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Создание комнаты
+      tags:
+      - rooms
   /rooms/{room_id}/messages:
     get:
       consumes:
@@ -152,6 +192,40 @@ paths:
       summary: Получения истории чата комнаты
       tags:
       - rooms
+  /ws/{room_id}:
+    get:
+      consumes:
+      - application/json
+      description: Устанавливает WebSocket-соединение с указанной комнатой. Используйте
+        ws:// или wss:// для подключения.
+      parameters:
+      - description: Сообщение
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/ws.Message'
+      - description: ID комнаты
+        in: path
+        name: room_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Неверный ID комнаты
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+        "409":
+          description: Не удалось найти пользователя
+          schema:
+            $ref: '#/definitions/swg.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Подключение к комнате
+      tags:
+      - ws
 securityDefinitions:
   BearerAuth:
     in: header
