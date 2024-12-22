@@ -2,7 +2,7 @@ name: Update Hotel Booking
 
 on:
   schedule:
-    - cron: '*/1 * * * *' # Каждую 1 минут
+    - cron: '*/5 * * * *' # Каждые 5 минут
   workflow_dispatch:
 
 jobs:
@@ -21,11 +21,10 @@ jobs:
 
       - name: Commit and Push Changes
         env:
-          GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
         run: |
           git config --global user.name "Anabol1ks"
           git config --global user.email "grigorogannisyan.12@gmail.com"
           git add hotel-booking/
           git commit -m "Update hotel-booking"
-          git push https://Anabol1ks:${GITHUB_TOKEN}@github.com/Anabol1ks/Golang.git HEAD:main
-
+          git push https://Anabol1ks:${PAT_TOKEN}@github.com/Anabol1ks/hotel-booking.git HEAD:main
