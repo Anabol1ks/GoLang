@@ -2,7 +2,7 @@ name: Update Hotel Booking
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/5 * * * *' # Каждые 5 минут
   workflow_dispatch:
 
 jobs:
@@ -19,11 +19,12 @@ jobs:
           rsync -a temp-folder/ hotel-booking/
           rm -rf temp-folder
 
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v5
-        with:
-          token: ${{ secrets.PAT_TOKEN }}
-          commit-message: "Update hotel-booking"
-          branch: update-hotel-booking
-          title: "Update hotel-booking"
-          body: "This PR updates the hotel-booking folder with the latest changes."
+      - name: Commit and Push Changes
+        env:
+          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+        run: |
+          git config --global user.name "Anabol1ks"
+          git config --global user.email "grigorogannisyan.12@gmail.com"
+          git add hotel-booking/
+          git commit -m "Update hotel-booking"
+          git push https://Anabol1ks:${PAT_TOKEN}@github.com/Anabol1ks/hotel-booking.git HEAD:main
