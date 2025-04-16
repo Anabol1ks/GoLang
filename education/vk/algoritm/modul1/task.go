@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/gammazero/deque"
 )
 
 func main() {
@@ -29,27 +27,29 @@ func main() {
 
 // 1.7 задача 1 очере
 func isSubsequence(a, b []string) bool {
-	var q deque.Deque[string]
-	for i := range a {
-		q.PushBack(a[i])
+	queue := make([]string, 0, len(a))
+	for _, c := range a {
+		queue = append(queue, c)
 	}
-	for i := range b {
-		if q.Back() == b[i] {
-			q.PopBack()
+
+	for _, c := range b {
+		if len(queue) > 0 && c == queue[0] {
+			queue = queue[1:]
 		}
 	}
-	return q.Len() == 0
+
+	return len(queue) == 0
 }
 
-func reverseArray(arr []int) []int {
-	left, right := 0, len(arr)-1
-	for left < right {
-		arr[left], arr[right] = arr[right], arr[left]
-		left++
-		right--
-	}
-	return arr
-}
+// func reverseArray(arr []int) []int {
+// 	left, right := 0, len(arr)-1
+// 	for left < right {
+// 		arr[left], arr[right] = arr[right], arr[left]
+// 		left++
+// 		right--
+// 	}
+// 	return arr
+// }
 
 // func twoSum(arr []int, sum int) (int, int) {
 // 	left := 0
