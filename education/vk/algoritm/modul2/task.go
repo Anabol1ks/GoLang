@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 func main() {
 	// arr := []int{1, 3, 5, 7, 8, 9, 10, 13, 14, 15, 22, 24, 24, 24, 24, 24, 24, 27, 33}
 	// left := 0
@@ -27,6 +29,68 @@ func main() {
 	// data := []int{1, 3, 4, 5, 7, 9, 11, 15, 17, 20, 22}
 	// fmt.Println(binarySearchExp(data, 11))
 
+	// 2.4 сортировки
+	arr := []int{4, 1, 41, 3, 5, 21, 2, 9, 33}
+	fmt.Println(selectionSort(arr))
+	fmt.Println(insertionSort(arr))
+	fmt.Println(bubbleSort(arr))
+	fmt.Println(shellSort(arr))
+}
+
+func shellSort(arr []int) []int {
+	gap := len(arr) / 2
+	for gap > 0 {
+		for i := gap; i < len(arr); i++ {
+			m_gap := i
+			for m_gap >= gap && arr[m_gap] < arr[m_gap-gap] {
+				arr[m_gap], arr[m_gap-gap] = arr[m_gap-gap], arr[m_gap]
+				m_gap -= gap
+			}
+		}
+		gap = gap / 2
+	}
+	return arr
+}
+
+func bubbleSort(arr []int) []int {
+	var sorted bool
+	for !sorted {
+		sorted = true
+		for i := 0; i < len(arr)-1; i++ {
+			if arr[i] > arr[i+1] {
+				arr[i], arr[i+1] = arr[i+1], arr[i]
+				sorted = false
+			}
+		}
+	}
+	return arr
+}
+
+func selectionSort(arr []int) []int {
+	len := len(arr)
+	for i := 0; i < len-1; i++ {
+		min := i
+		for j := i + 1; j < len; j++ {
+			if arr[j] < arr[min] {
+				min = j
+			}
+		}
+		arr[i], arr[min] = arr[min], arr[i]
+	}
+	return arr
+}
+
+func insertionSort(arr []int) []int {
+	for i := 1; i < len(arr); i++ {
+		j := i
+		for j > 0 {
+			if arr[j-1] > arr[j] {
+				arr[j-1], arr[j] = arr[j], arr[j-1]
+			}
+			j--
+		}
+	}
+	return arr
 }
 
 // func exponentialSearch(data []int, target int) (int, int) {
